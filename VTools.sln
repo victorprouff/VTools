@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbMigration", "DbMigration\DbMigration.csproj", "{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,5 +19,12 @@ Global
 		{A74AF791-28F1-45CD-8AAF-B76E15C67DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A74AF791-28F1-45CD-8AAF-B76E15C67DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A74AF791-28F1-45CD-8AAF-B76E15C67DBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668} = {BA91B7B2-9112-4014-817C-036CFE44B4E4}
 	EndGlobalSection
 EndGlobal
