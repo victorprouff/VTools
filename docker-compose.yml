@@ -1,0 +1,6 @@
+﻿services:
+  vtools:
+    image: vtools
+    build:
+      context: .
+      dockerfile: VTools/Dockerfile
