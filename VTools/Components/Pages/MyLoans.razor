@@ -1,158 +1,159 @@
 @page "/MyLoans"
-@* @attribute [StreamRendering] *@
+@attribute [StreamRendering]
+@rendermode InteractiveServer
 @using System.Globalization
 @using NodaTime
 
-<PageTitle>My Loans</PageTitle>
+<PageTitle>Prêt de livres</PageTitle>
 
-<h3>My Loans</h3>
+<h3>Prêt de livres</h3>
 
-<p>This component demonstrates showing data.</p>
+<div class="input-group mb-3">
+    <input type="text" class="form-control" placeholder="Titre du livre" aria-label="Titre du livre" aria-describedby="Title" @bind="_newTitle">
+    <input type="text" class="form-control" placeholder="Emprunteur" aria-label="Recipient's username" aria-describedby="button-addon2" @bind="_borrower">
+    <button class="btn btn-outline-success" type="button" id="button-addon2" @onclick="@(() => Add())">
+        <i class="bi bi-plus"></i>
+    </button>
+</div>
 
-@if (_loans is null)
-{
-    <p>
-        <em>Loading...</em>
-    </p>
-}
-else
-{
-    <table class="table">
-        <thead>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Titre</th>
+        <th>Emprunteur</th>
+        <th>Depuis le</th>
+        <th></th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var loan in _loans.Where(l => l.IsVisible))
+    {
         <tr>
-            <th>Titre</th>
-            <th>Emprunteur</th>
-            <th>Depuis le</th>
-            <th></th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var loan in _loans.Where(l => l.IsVisible))
-        {
-            <tr>
-                <td>@loan.Titre</td>
-                <td>@loan.Borrower</td>
-                <td>
-                    @if (loan.IsRendered is false)
-                    {
-                        @loan.LoanStartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-                    }
-                </td>
-                <td>
-                    @if (loan.IsRendered)
-                    {
-                        <i class="bi bi-check2"></i>
-                    }
-                </td>
-                <td>
-                    <button @onclick="ReportPointerLocation">
-                        Button
-                    </button>
+            <td>@loan.Titre</td>
+            <td>@loan.Borrower</td>
+            <td>
+                @if (loan.IsRendered is false)
+                {
+                    @loan.LoanStartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                }
+            </td>
+            <td>
+                @if (loan.IsRendered)
+                {
+                    <i class="bi bi-check2"></i>
+                }
+            </td>
+            <td>
+                @if (loan.IsRendered is false)
+                {
                     <button type="button" class="btn btn-outline-primary" @onclick="@(() => Edit(loan.Id))">
                         Rendu
-                        @* <i class="bi bi-pencil-square"></i> *@
                     </button>
-                    <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
-                        <i class="bi bi-trash-fill"></i>
-                    </button>
+                }
+                <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
 
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
-
-<p>@mousePointerMessage</p>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
 
 
 @code {
-    private List<Loan>? _loans;
+    private List<Loan> _loans = new();
 
-    private string? mousePointerMessage;
-
-    private void ReportPointerLocation(MouseEventArgs e)
-    {
-        mousePointerMessage = $"Mouse coordinates: {e.ScreenX}:{e.ScreenY}";
-    }
+    private string _newTitle = string.Empty;
+    private string _borrower = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        var now = SystemClock.Instance.GetCurrentInstant();
-
-        _loans =
-        [
-            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10)), now),
-            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8)), now),
-            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5)), now),
-            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2)), now),
-            new Loan(Guid.NewGuid(), "Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12)), now),
-            new Loan(Guid.NewGuid(), "Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)), now)
-        ];
+        GetLoans();
 
         SortList();
     }
 
     private void SortList()
     {
-        _loans.OrderBy(l => l.IsRendered).ThenBy(l => l.LoanStartDate);
+        _loans = _loans.OrderBy(l => l.IsRendered).ThenBy(l => l.LoanStartDate).ToList();
         StateHasChanged();
     }
 
-    private void UpdateHeading(MouseEventArgs e, Guid id)
+    private void Add()
     {
-        Console.WriteLine($"Selected #{id} at {e.ClientX}:{e.ClientY}");
+        _loans.Add(new Loan(_newTitle, _borrower, GetCurrentInstant()));
+
+        SortList();
     }
 
     private void Edit(Guid loanId)
     {
-        Console.WriteLine($"Edit {loanId}");
+        var renderedLoan = _loans.Find(l => l.Id == loanId);
 
-        var renderedLoan = _loans?.Find(l => l.Id == loanId);
-
-        if (renderedLoan is not null)
-        {
-            renderedLoan.IsRendered = true;
-        }
+        renderedLoan?.Rendered();
 
         SortList();
     }
 
     private void Delete(Guid loanId)
     {
-        Console.WriteLine($"Delete {loanId}");
+        var removedLoan = _loans.Find(l => l.Id == loanId);
 
-        var removedLoan = _loans?.Find(l => l.Id == loanId);
-
-        if (removedLoan is not null)
-        {
-            _loans?.Remove(removedLoan);
-        }
+        removedLoan?.Delete();
 
         SortList();
     }
 
+    private static Instant GetCurrentInstant() => SystemClock.Instance.GetCurrentInstant();
+
+    private void GetLoans()
+    {
+        var now = GetCurrentInstant();
+
+        _loans =
+        [
+            new Loan("Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10))),
+            new Loan("Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8))),
+            new Loan("Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5))),
+            new Loan("Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2))),
+            new Loan("Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12))),
+            new Loan("Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)))
+        ];
+    }
+
     private class Loan
     {
-        public Loan(Guid id, string titre, string borrower, Instant loanStartDate, Instant loanEndDate, bool isRendered = false)
+        public Loan(string titre, string borrower, Instant loanStartDate, bool isRendered = false)
         {
-            Id = id;
+            Id = Guid.NewGuid();
             Titre = titre;
             Borrower = borrower;
             LoanStartDate = loanStartDate;
-            LoanEndDate = loanEndDate;
             IsRendered = isRendered;
         }
 
-        public Guid Id { get; set; }
-        public string Titre { get; set; }
-        public string Borrower { get; set; }
+        public Guid Id { get; }
+        public string Titre { get; }
+        public string Borrower { get; }
         public bool IsRendered { get; set; }
         public bool IsVisible { get; set; } = true;
-        public Instant LoanStartDate { get; set; }
-        public Instant LoanEndDate { get; set; }
+        public Instant LoanStartDate { get; }
+        public Instant? LoanEndDate { get; set; }
+
+        public void Rendered()
+        {
+            LoanEndDate = GetCurrentInstant();
+            IsRendered = true;
+        }
+
+        public void Delete()
+        {
+            IsVisible = false;
+        }
     }
+
 }
