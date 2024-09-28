@@ -1,0 +1,158 @@
+@page "/MyLoans"
+@* @attribute [StreamRendering] *@
+@using System.Globalization
+@using NodaTime
+
+<PageTitle>My Loans</PageTitle>
+
+<h3>My Loans</h3>
+
+<p>This component demonstrates showing data.</p>
+
+@if (_loans is null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Emprunteur</th>
+            <th>Depuis le</th>
+            <th></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var loan in _loans.Where(l => l.IsVisible))
+        {
+            <tr>
+                <td>@loan.Titre</td>
+                <td>@loan.Borrower</td>
+                <td>
+                    @if (loan.IsRendered is false)
+                    {
+                        @loan.LoanStartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                    }
+                </td>
+                <td>
+                    @if (loan.IsRendered)
+                    {
+                        <i class="bi bi-check2"></i>
+                    }
+                </td>
+                <td>
+                    <button @onclick="ReportPointerLocation">
+                        Button
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Edit(loan.Id))">
+                        Rendu
+                        @* <i class="bi bi-pencil-square"></i> *@
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+<p>@mousePointerMessage</p>
+
+
+@code {
+    private List<Loan>? _loans;
+
+    private string? mousePointerMessage;
+
+    private void ReportPointerLocation(MouseEventArgs e)
+    {
+        mousePointerMessage = $"Mouse coordinates: {e.ScreenX}:{e.ScreenY}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var now = SystemClock.Instance.GetCurrentInstant();
+
+        _loans =
+        [
+            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10)), now),
+            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8)), now),
+            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5)), now),
+            new Loan(Guid.NewGuid(), "Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2)), now),
+            new Loan(Guid.NewGuid(), "Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12)), now),
+            new Loan(Guid.NewGuid(), "Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)), now)
+        ];
+
+        SortList();
+    }
+
+    private void SortList()
+    {
+        _loans.OrderBy(l => l.IsRendered).ThenBy(l => l.LoanStartDate);
+        StateHasChanged();
+    }
+
+    private void UpdateHeading(MouseEventArgs e, Guid id)
+    {
+        Console.WriteLine($"Selected #{id} at {e.ClientX}:{e.ClientY}");
+    }
+
+    private void Edit(Guid loanId)
+    {
+        Console.WriteLine($"Edit {loanId}");
+
+        var renderedLoan = _loans?.Find(l => l.Id == loanId);
+
+        if (renderedLoan is not null)
+        {
+            renderedLoan.IsRendered = true;
+        }
+
+        SortList();
+    }
+
+    private void Delete(Guid loanId)
+    {
+        Console.WriteLine($"Delete {loanId}");
+
+        var removedLoan = _loans?.Find(l => l.Id == loanId);
+
+        if (removedLoan is not null)
+        {
+            _loans?.Remove(removedLoan);
+        }
+
+        SortList();
+    }
+
+    private class Loan
+    {
+        public Loan(Guid id, string titre, string borrower, Instant loanStartDate, Instant loanEndDate, bool isRendered = false)
+        {
+            Id = id;
+            Titre = titre;
+            Borrower = borrower;
+            LoanStartDate = loanStartDate;
+            LoanEndDate = loanEndDate;
+            IsRendered = isRendered;
+        }
+
+        public Guid Id { get; set; }
+        public string Titre { get; set; }
+        public string Borrower { get; set; }
+        public bool IsRendered { get; set; }
+        public bool IsVisible { get; set; } = true;
+        public Instant LoanStartDate { get; set; }
+        public Instant LoanEndDate { get; set; }
+    }
+}
