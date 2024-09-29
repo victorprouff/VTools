@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 using VTools.Components;
 using VTools.Components.Account;
 using VTools.Data;
+using VTools.Data.Repositories;
+using VTools.LoanAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +36,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+builder.Services.AddTransient<IClock, SystemClock>(_ => SystemClock.Instance);
+
+builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
+    new LoanRepository(connectionString));
+
+builder.Services.AddTransient<ILoanDomain, LoanDomain>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

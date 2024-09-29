@@ -30,7 +30,7 @@
     @foreach (var loan in _loans.Where(l => l.IsVisible))
     {
         <tr>
-            <td>@loan.Titre</td>
+            <td>@loan.Title</td>
             <td>@loan.Borrower</td>
             <td>
                 @if (loan.IsRendered is false)
@@ -127,17 +127,17 @@
 
     private class Loan
     {
-        public Loan(string titre, string borrower, Instant loanStartDate, bool isRendered = false)
+        public Loan(string title, string borrower, Instant loanStartDate, bool isRendered = false)
         {
             Id = Guid.NewGuid();
-            Titre = titre;
+            Title = title;
             Borrower = borrower;
             LoanStartDate = loanStartDate;
             IsRendered = isRendered;
         }
 
         public Guid Id { get; }
-        public string Titre { get; }
+        public string Title { get; }
         public string Borrower { get; }
         public bool IsRendered { get; set; }
         public bool IsVisible { get; set; } = true;
