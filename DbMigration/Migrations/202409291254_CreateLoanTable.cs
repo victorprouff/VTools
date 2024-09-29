@@ -7,14 +7,14 @@ public class CreateLoanTable : Migration
 {
     public override void Up()
     {
-        Create.Table("Loan")
-            .WithColumn("Id").AsGuid().NotNullable().PrimaryKey().Unique().WithDefaultValue(SystemMethods.NewGuid)
-            .WithColumn("Titre").AsString().NotNullable()
-            .WithColumn("Borrower").AsString().NotNullable()
-            .WithColumn("IsRendered").AsBoolean().NotNullable().WithDefaultValue(false)
-            .WithColumn("IsVisible").AsBoolean().NotNullable().WithDefaultValue(true)
-            .WithColumn("LoanStartDate").AsDateTimeOffset().NotNullable()
-            .WithColumn("LoanEndDate").AsDateTimeOffset().Nullable();
+        Create.Table("loans")
+            .WithColumn("id").AsGuid().NotNullable().PrimaryKey().Unique().WithDefaultValue(SystemMethods.NewGuid)
+            .WithColumn("title").AsString().NotNullable()
+            .WithColumn("borrower").AsString().NotNullable()
+            .WithColumn("isRendered").AsBoolean().NotNullable().WithDefaultValue(false)
+            .WithColumn("isVisible").AsBoolean().NotNullable().WithDefaultValue(true)
+            .WithColumn("loanStartDate").AsDateTimeOffset().NotNullable()
+            .WithColumn("loanEndDate").AsDateTimeOffset().Nullable();
     }
 
     public override void Down()
