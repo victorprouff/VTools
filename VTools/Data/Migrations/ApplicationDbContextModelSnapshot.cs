@@ -21,7 +21,7 @@ namespace VTools.Migrations
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            // SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("VTools.Data.ApplicationUser", b =>
             {
@@ -121,7 +121,7 @@ namespace VTools.Migrations
                     .ValueGeneratedOnAdd()
                     .HasColumnType("int");
 
-                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                // SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                 b.Property<string>("ClaimType")
                     .HasColumnType("nvarchar(max)");
@@ -146,7 +146,7 @@ namespace VTools.Migrations
                     .ValueGeneratedOnAdd()
                     .HasColumnType("int");
 
-                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                // SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                 b.Property<string>("ClaimType")
                     .HasColumnType("nvarchar(max)");
