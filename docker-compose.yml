@@ -1,11 +1,4 @@
-﻿#services:
-#  vtools:
-#    image: vtools
-#    build:
-#      context: .
-#      dockerfile: VTools/Dockerfile
-
-version: "3.8"
+﻿
 services:
   db:
     image: postgres:alpine
@@ -16,7 +9,11 @@ services:
     ports:
       - 5432:5432
   dbmigration:
-    image: dbmigration
+    image: dbmigration:latest
     build:
       context: .
       dockerfile: DbMigration/Dockerfile
+    depends_on:
+      - db
+    environment:
+      ConnectionStrings__DefaultConnection: "User ID =user-vTools-dev;Password=password;Server=db;Port=5432;Database=vTools;Pooling=true;"

@@ -25,6 +25,5 @@ Global
 		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668} = {BA91B7B2-9112-4014-817C-036CFE44B4E4}
 	EndGlobalSection
 EndGlobal
