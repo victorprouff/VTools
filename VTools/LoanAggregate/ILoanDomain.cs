@@ -5,9 +5,9 @@ namespace VTools.LoanAggregate;
 
 public interface ILoanDomain
 {
-    Task CreateAsync(CreateLoanCommand command, CancellationToken cancellationToken);
-    Task UpdateAsync(UpdateLoanCommand command, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-    Task<LoanProjection?> GetAsync(Guid id, CancellationToken cancellationToken);
-    Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, CancellationToken cancellationToken, bool withInvisibleLoan = false);
+    Task CreateAsync(CreateLoanCommand command);
+    Task UpdateAsync(UpdateLoanCommand command);
+    Task DeleteAsync(Guid id);
+    Task<LoanProjection?> GetAsync(Guid id);
+    Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, bool withInvisibleLoan = false);
 }

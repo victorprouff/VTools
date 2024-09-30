@@ -5,10 +5,10 @@ namespace VTools.Data.Repositories;
 
 public interface ILoanRepository
 {
-    Task CreateAsync(Loan loan, CancellationToken cancellationToken);
-    Task UpdateAsync(Loan loan, CancellationToken cancellationToken);
-    Task Delete(Guid id, CancellationToken cancellationToken);
-    Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, CancellationToken cancellationToken, bool withInvisibleLoan = false);
-    Task<LoanProjection?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task<Loan?> GetById(Guid commandId, CancellationToken cancellationToken);
+    Task CreateAsync(Loan loan);
+    Task UpdateAsync(Loan loan);
+    Task Delete(Guid id);
+    Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, bool withInvisibleLoan = false);
+    Task<LoanProjection?> GetByIdAsync(Guid id);
+    Task<Loan?> GetById(Guid commandId);
 }

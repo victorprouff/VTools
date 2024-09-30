@@ -11,14 +11,14 @@ public class CreateLoanTable : Migration
             .WithColumn("id").AsGuid().NotNullable().PrimaryKey().Unique().WithDefaultValue(SystemMethods.NewGuid)
             .WithColumn("title").AsString().NotNullable()
             .WithColumn("borrower").AsString().NotNullable()
-            .WithColumn("isRendered").AsBoolean().NotNullable().WithDefaultValue(false)
-            .WithColumn("isVisible").AsBoolean().NotNullable().WithDefaultValue(true)
-            .WithColumn("loanStartDate").AsDateTimeOffset().NotNullable()
-            .WithColumn("loanEndDate").AsDateTimeOffset().Nullable();
+            .WithColumn("is_rendered").AsBoolean().NotNullable().WithDefaultValue(false)
+            .WithColumn("is_visible").AsBoolean().NotNullable().WithDefaultValue(true)
+            .WithColumn("loan_start_date").AsDateTimeOffset().NotNullable()
+            .WithColumn("loan_end_date").AsDateTimeOffset().Nullable();
     }
 
     public override void Down()
     {
-        Delete.Table("Loan");
+        Delete.Table("Loans");
     }
 }

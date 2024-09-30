@@ -7,10 +7,10 @@ namespace VTools.Data.Repositories;
 
 public class LoanRepository(string connectionString) : BaseRepository(connectionString), ILoanRepository
 {
-    public async Task CreateAsync(Loan loan, CancellationToken cancellationToken)
+    public async Task CreateAsync(Loan loan)
     {
         const string sql = """
-                           INSERT INTO loans (titre, borrower, loanStartDate)
+                           INSERT INTO loans (titre, borrower, loan_start_date)
                            VALUES (@Titre, @Borrower, @LoanStartDate);
                            """;
 
@@ -18,18 +18,18 @@ public class LoanRepository(string connectionString) : BaseRepository(connection
         await connection.ExecuteAsync(sql, (LoanEntity)loan, commandTimeout: 1);
     }
 
-    public async Task UpdateAsync(Loan loan, CancellationToken cancellationToken)
+    public async Task UpdateAsync(Loan loan)
     {
         await using var connection = GetConnection();
         const string sql = """
-                           UPDATE nuggets 
+                           UPDATE loans 
                            SET 
                                title = @Title,
                                borrower = @Borrower,
-                               isRendered = @IsRendered,
-                               isVisible = @isVisible,
-                               loanStartDate = @loanStartDate,
-                               loanEndDate = @LoanEndDate
+                               is_rendered = @IsRendered,
+                               is_visible = @isVisible,
+                               loan_start_date = @loanStartDate,
+                               loan_end_date = @LoanEndDate
                            WHERE id = @Id;
                            """;
 
@@ -48,29 +48,29 @@ public class LoanRepository(string connectionString) : BaseRepository(connection
             commandTimeout: 1);
     }
 
-    public async Task Delete(Guid id, CancellationToken cancellationToken)
+    public async Task Delete(Guid id)
     {
         await using var connection = GetConnection();
         const string sql = """
-                           UPDATE nuggets 
+                           UPDATE loans 
                            SET 
-                               isVisible = false
+                               is_visible = false
                            WHERE id = @Id;
                            """;
 
         await connection.ExecuteAsync(sql, new { id }, commandTimeout: 1);
     }
 
-    public async Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, CancellationToken cancellationToken, bool withInvisibleLoan = false)
+    public async Task<GetAllLoansProjection> GetAllAsync(int limit, int offset, bool withInvisibleLoan = false)
     {
-        var where = withInvisibleLoan is false ? "WHERE l.visible = true" : string.Empty;
+        var where = withInvisibleLoan is false ? "WHERE l.is_visible = true" : string.Empty;
 
-        var sql = $@"SELECT count(*) FROM loans
+        var sql = $@"SELECT count(*) FROM loans;
        
-                   SELECT l.id, l.title, l.borrower, l.isRendered, l.isVisible, l.loanStartDate, l.loanEndDate
+                   SELECT l.id, l.title, l.borrower, l.is_rendered, l.is_visible, l.loan_start_date, l.loan_end_date
                    FROM loans l
                    {where}
-                   ORDER BY n.loanStartDate DESC
+                    ORDER BY l.loan_start_date DESC
                    LIMIT @Limit OFFSET @Offset;
                    ";
 
@@ -80,19 +80,23 @@ public class LoanRepository(string connectionString) : BaseRepository(connection
             new { Limit = limit, Offset = offset },
             commandTimeout: 1);
 
-        var nbOfLoans = multi.Read<int>().Single();
-        var loans = await multi.ReadAsync<LoanProjection>();
+        Console.WriteLine("Test 1: Get all loans");
 
-        return new GetAllLoansProjection(nbOfLoans, loans);
+        var nbOfLoans = multi.Read<int>().Single();
+        var loans = await multi.ReadAsync<LoanEntity>();
+
+        Console.WriteLine("Test 2: ", loans);
+
+        return new GetAllLoansProjection(nbOfLoans, loans.Select(l => (LoanProjection)l));
 
     }
 
-    public async Task<LoanProjection?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<LoanProjection?> GetByIdAsync(Guid id)
     {
         const string sql = """
-            SELECT l.id, l.title, l.borrower, l.isRendered, l.isVisible, l.loanStartDate, l.loanEndDate
+            SELECT l.id, l.title, l.borrower, l.is_rendered, l.is_visible, l.loan_start_date, l.loan_end_date
             FROM loans l
-            WHERE n.id = @Id
+            WHERE l.id = @Id;
         """;
 
         await using var connexion = GetConnection();
@@ -102,12 +106,12 @@ public class LoanRepository(string connectionString) : BaseRepository(connection
             commandTimeout: 1);
     }
 
-    public async Task<Loan?> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<Loan?> GetById(Guid id)
     {
         const string sql = """
-           SELECT l.id, l.title, l.borrower, l.isRendered, l.isVisible, l.loanStartDate, l.loanEndDate
+            SELECT l.id, l.title, l.borrower, l.is_rendered, l.is_visible, l.loan_start_date, l.loan_end_date
            FROM loans l
-           WHERE n.id = @Id
+           WHERE l.id = @Id;
         """;
 
         await using var connexion = GetConnection();

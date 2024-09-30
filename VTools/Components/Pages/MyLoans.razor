@@ -1,8 +1,14 @@
 @page "/MyLoans"
 @attribute [StreamRendering]
 @rendermode InteractiveServer
+
+@* @inject ILoanDomain LoanDomain *@
+
 @using System.Globalization
 @using NodaTime
+@using VTools.LoanAggregate
+@using VTools.LoanAggregate.Models
+@using VTools.LoanAggregate.Projections
 
 <PageTitle>Prêt de livres</PageTitle>
 
@@ -63,7 +69,7 @@
 
 
 @code {
-    private List<Loan> _loans = new();
+    private List<Loan> _loans = [];
 
     private string _newTitle = string.Empty;
     private string _borrower = string.Empty;
@@ -72,7 +78,7 @@
     {
         await base.OnInitializedAsync();
 
-        GetLoans();
+        await GetLoans();
 
         SortList();
     }
@@ -83,70 +89,99 @@
         StateHasChanged();
     }
 
-    private void Add()
+    private async Task Add()
     {
-        _loans.Add(new Loan(_newTitle, _borrower, GetCurrentInstant()));
+        // await LoanDomain.CreateAsync(new CreateLoanCommand(_newTitle, _borrower));
 
-        SortList();
+        await GetLoans();
     }
 
     private void Edit(Guid loanId)
     {
         var renderedLoan = _loans.Find(l => l.Id == loanId);
 
-        renderedLoan?.Rendered();
+        if (renderedLoan is not null)
+        {
+            renderedLoan.Rendered(GetCurrentInstant());
 
-        SortList();
+            // LoanDomain.UpdateAsync(
+            //     new UpdateLoanCommand(
+            //         renderedLoan.Id,
+            //         renderedLoan.Title,
+            //         renderedLoan.Borrower,
+            //         renderedLoan.IsRendered,
+            //         renderedLoan.LoanEndDate));
+
+            SortList();
+        }
     }
 
     private void Delete(Guid loanId)
     {
         var removedLoan = _loans.Find(l => l.Id == loanId);
 
-        removedLoan?.Delete();
+        if (removedLoan is not null)
+        {
+            removedLoan.Delete();
 
-        SortList();
+            // LoanDomain.DeleteAsync(removedLoan.Id);
+
+            SortList();
+        }
     }
 
     private static Instant GetCurrentInstant() => SystemClock.Instance.GetCurrentInstant();
 
-    private void GetLoans()
+    private async Task GetLoans()
     {
-        var now = GetCurrentInstant();
+        // var loansProjection = await LoanDomain.GetAllAsync(100, 0);
 
-        _loans =
-        [
-            new Loan("Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10))),
-            new Loan("Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8))),
-            new Loan("Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5))),
-            new Loan("Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2))),
-            new Loan("Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12))),
-            new Loan("Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)))
-        ];
+        // _loans = loansProjection.Loans.Select(l => (Loan)l).ToList();
+
+        // _loans =
+        // [
+        //     new Loan("Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10))),
+        //     new Loan("Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8))),
+        //     new Loan("Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5))),
+        //     new Loan("Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2))),
+        //     new Loan("Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12))),
+        //     new Loan("Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)))
+        // ];
+
+        SortList();
     }
 
     private class Loan
     {
-        public Loan(string title, string borrower, Instant loanStartDate, bool isRendered = false)
+        private Loan(
+            Guid id,
+            string title,
+            string borrower,
+            bool isRendered,
+            bool isVisible,
+            Instant loanStartDate,
+            Instant? loanEndDate)
         {
-            Id = Guid.NewGuid();
+            Id = id;
             Title = title;
             Borrower = borrower;
-            LoanStartDate = loanStartDate;
             IsRendered = isRendered;
+            IsVisible = isVisible;
+            LoanStartDate = loanStartDate;
+            LoanEndDate = loanEndDate;
         }
 
         public Guid Id { get; }
         public string Title { get; }
         public string Borrower { get; }
         public bool IsRendered { get; set; }
-        public bool IsVisible { get; set; } = true;
+        public bool IsVisible { get; set; }
         public Instant LoanStartDate { get; }
         public Instant? LoanEndDate { get; set; }
 
-        public void Rendered()
+        public void Rendered(Instant loanEnDate)
         {
-            LoanEndDate = GetCurrentInstant();
+            LoanEndDate = loanEnDate;
             IsRendered = true;
         }
 
@@ -154,6 +189,14 @@
         {
             IsVisible = false;
         }
-    }
 
+        public static explicit operator Loan(LoanProjection loan) => new(
+            loan.Id,
+            loan.Title,
+            loan.Borrower,
+            loan.IsRendered,
+            loan.IsVisible,
+            loan.LoanStartDate,
+            loan.LoanEndDate);
+    }
 }

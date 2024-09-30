@@ -34,7 +34,7 @@ public class Loan
     public string Title { get; private set; }
     public string Borrower { get; private set; }
     public bool IsRendered { get; private set; }
-    public bool IsVisible { get; }
+    public bool IsVisible { get; private set; }
     public Instant LoanStartDate { get; }
     public Instant? LoanEndDate { get; private set; }
 
@@ -48,7 +48,7 @@ public class Loan
             borrower,
             loanStartDate);
 
-    public void Update(string title, string borrower, bool isRendered, Instant loanEndDate)
+    public void Update(string title, string borrower, bool isRendered, Instant? loanEndDate)
     {
         Title = title;
         Borrower = borrower;

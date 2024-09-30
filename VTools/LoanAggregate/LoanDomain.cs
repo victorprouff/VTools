@@ -16,39 +16,38 @@ public class LoanDomain : ILoanDomain
         _repository = repository;
     }
 
-    public async Task CreateAsync(CreateLoanCommand command, CancellationToken cancellationToken)
+    public async Task CreateAsync(CreateLoanCommand command)
     {
         var loan = Loan.Create(
             command.Title,
             command.Borrower,
             _clock.GetCurrentInstant());
 
-        await _repository.CreateAsync(loan, cancellationToken);
+        await _repository.CreateAsync(loan);
     }
 
-    public async Task UpdateAsync(UpdateLoanCommand command, CancellationToken cancellationToken)
+    public async Task UpdateAsync(UpdateLoanCommand command)
     {
-        var loan = await _repository.GetById(command.Id, cancellationToken)
+        var loan = await _repository.GetById(command.Id)
                    ?? throw new KeyNotFoundException();
         // ?? throw new NotFoundException($"The nugget with id {command.Id} is not found.");
 
         loan.Update(command.Title, command.Borrower, command.IsRendered, command.LoanEndDate);
 
-        await _repository.UpdateAsync(loan, cancellationToken);
+        await _repository.UpdateAsync(loan);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid id)
     {
-        await _repository.Delete(id, cancellationToken);
+        await _repository.Delete(id);
     }
 
-    public async Task<LoanProjection?> GetAsync(Guid id, CancellationToken cancellationToken) =>
-        await _repository.GetByIdAsync(id, cancellationToken);
+    public async Task<LoanProjection?> GetAsync(Guid id) =>
+        await _repository.GetByIdAsync(id);
 
     public async Task<GetAllLoansProjection> GetAllAsync(
         int limit,
         int offset,
-        CancellationToken cancellationToken,
         bool withInvisibleLoan = false) =>
-        await _repository.GetAllAsync(limit, offset, cancellationToken, withInvisibleLoan);
+        await _repository.GetAllAsync(limit, offset, withInvisibleLoan);
 }
