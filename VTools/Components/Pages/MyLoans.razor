@@ -2,7 +2,7 @@
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
-@* @inject ILoanDomain LoanDomain *@
+@inject ILoanDomain LoanDomain
 
 @using System.Globalization
 @using NodaTime
@@ -91,7 +91,7 @@
 
     private async Task Add()
     {
-        // await LoanDomain.CreateAsync(new CreateLoanCommand(_newTitle, _borrower));
+        await LoanDomain.CreateAsync(new CreateLoanCommand(_newTitle, _borrower));
 
         await GetLoans();
     }
@@ -104,13 +104,13 @@
         {
             renderedLoan.Rendered(GetCurrentInstant());
 
-            // LoanDomain.UpdateAsync(
-            //     new UpdateLoanCommand(
-            //         renderedLoan.Id,
-            //         renderedLoan.Title,
-            //         renderedLoan.Borrower,
-            //         renderedLoan.IsRendered,
-            //         renderedLoan.LoanEndDate));
+            LoanDomain.UpdateAsync(
+                new UpdateLoanCommand(
+                    renderedLoan.Id,
+                    renderedLoan.Title,
+                    renderedLoan.Borrower,
+                    renderedLoan.IsRendered,
+                    renderedLoan.LoanEndDate));
 
             SortList();
         }
@@ -124,7 +124,7 @@
         {
             removedLoan.Delete();
 
-            // LoanDomain.DeleteAsync(removedLoan.Id);
+            LoanDomain.DeleteAsync(removedLoan.Id);
 
             SortList();
         }
@@ -134,9 +134,9 @@
 
     private async Task GetLoans()
     {
-        // var loansProjection = await LoanDomain.GetAllAsync(100, 0);
+        var loansProjection = await LoanDomain.GetAllAsync(100, 0);
 
-        // _loans = loansProjection.Loans.Select(l => (Loan)l).ToList();
+        _loans = loansProjection.Loans.Select(l => (Loan)l).ToList();
 
         // _loans =
         // [

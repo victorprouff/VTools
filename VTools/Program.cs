@@ -1,10 +1,13 @@
+using Dapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
+using Npgsql;
 using VTools.Components;
 using VTools.Components.Account;
 using VTools.Data;
+using VTools.Data.Handlers;
 using VTools.Data.Repositories;
 using VTools.LoanAggregate;
 
@@ -28,9 +31,17 @@ builder.Services.AddAuthentication(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
                        throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+DefaultTypeMap.MatchNamesWithUnderscores = true;
+SqlMapper.AddTypeHandler(new InstantHandler());
+
+builder.Services.AddNpgsqlDataSource(
+    connectionString,
+    builder => builder.UseNodaTime());
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
