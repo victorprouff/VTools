@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: user-vTools-dev
       POSTGRES_PASSWORD: password
       POSTGRES_DB: vTools
+    platform: linux/arm64
     ports:
       - 5432:5432
   dbmigration:
@@ -13,16 +14,18 @@ services:
     build:
       context: .
       dockerfile: DbMigration/Dockerfile
+    platform: linux/arm64
     depends_on:
       - db
     environment:
       ConnectionStrings__DefaultConnection: "User ID =user-vTools-dev;Password=password;Server=db;Port=5432;Database=vTools;Pooling=true;"
 
   VTools:
-    image: vtools
+    image: vtools:latest
     build:
       context: .
       dockerfile: VTools/Dockerfile
+    platform: linux/arm64
     ports:
       - 8080:8080
     depends_on:
