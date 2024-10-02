@@ -141,16 +141,6 @@
 
         _loans = loansProjection.Loans.Select(l => (Loan)l).ToList();
 
-        // _loans =
-        // [
-        //     new Loan("Fullmetal Alchemist - Tome 1", "Eva", now.Plus(Duration.FromDays(-10))),
-        //     new Loan("Fullmetal Alchemist - Tome 2", "Eva", now.Plus(Duration.FromDays(-8))),
-        //     new Loan("Fullmetal Alchemist - Tome 3", "Eva", now.Plus(Duration.FromDays(-5))),
-        //     new Loan("Fullmetal Alchemist - Tome 4", "Eva", now.Plus(Duration.FromDays(-2))),
-        //     new Loan("Le problème à 3 corps - Tome 1", "Carla", now.Plus(Duration.FromDays(-12))),
-        //     new Loan("Jouissance Club", "Emeline", now.Plus(Duration.FromDays(-1)))
-        // ];
-
         SortList();
     }
 

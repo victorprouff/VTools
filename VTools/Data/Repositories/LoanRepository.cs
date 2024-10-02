@@ -86,12 +86,8 @@ public class LoanRepository(string connectionString) : BaseRepository(connection
             new { Limit = limit, Offset = offset },
             commandTimeout: 1);
 
-        Console.WriteLine("Test 1: Get all loans");
-
         var nbOfLoans = multi.Read<int>().Single();
         var loans = await multi.ReadAsync<LoanEntity>();
-
-        Console.WriteLine("Test 2: ", loans);
 
         return new GetAllLoansProjection(nbOfLoans, loans.Select(l => (LoanProjection)l));
     }

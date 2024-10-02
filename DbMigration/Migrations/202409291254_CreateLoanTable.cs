@@ -19,6 +19,6 @@ public class CreateLoanTable : Migration
 
     public override void Down()
     {
-        Delete.Table("Loans");
+        Delete.Table("loans");
     }
 }
