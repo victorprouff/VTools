@@ -57,12 +57,33 @@ builder.Services.AddTransient<ILoanDomain, LoanDomain>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+builder.Services.AddAuthorizationCore(options =>
+    options.AddPolicy("EditUser", policy =>
+        policy.RequireAssertion(context =>
+        {
+            if (context.Resource is RouteData rd)
+            {
+                rd.Values.TryGetValue("id", out var value);
+                // var routeValue = rd.RouteValues.TryGetValue("id", out var value);
+
+                var id = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(id))
+                {
+                    return id.StartsWith("EMP", StringComparison.InvariantCulture);
+                }
+            }
+
+            return false;
+        }))
+    );
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseMigrationsEndPoint();
+    // app.UseMigrationsEndPoint();
 }
 else
 {

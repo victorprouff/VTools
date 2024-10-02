@@ -19,6 +19,7 @@ public class CreateIdentitySchema : Migration
             .WithColumn("Id").AsString().NotNullable().PrimaryKey().Unique()
             .WithColumn("UserName").AsString().Nullable()
             .WithColumn("NormalizedUserName").AsString().Nullable()
+            .WithColumn("Email").AsString().Nullable()
             .WithColumn("NormalizedEmail").AsString().Nullable()
             .WithColumn("EmailConfirmed").AsBoolean().NotNullable()
             .WithColumn("PasswordHash").AsString().Nullable()

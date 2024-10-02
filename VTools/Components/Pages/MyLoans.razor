@@ -5,10 +5,13 @@
 @inject ILoanDomain LoanDomain
 
 @using System.Globalization
+@using Microsoft.AspNetCore.Authorization
 @using NodaTime
 @using VTools.LoanAggregate
 @using VTools.LoanAggregate.Models
 @using VTools.LoanAggregate.Projections
+
+@attribute [Authorize]
 
 <PageTitle>Prêt de livres</PageTitle>
 
