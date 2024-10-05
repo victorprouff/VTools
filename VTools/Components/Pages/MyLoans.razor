@@ -54,15 +54,18 @@
                 }
             </td>
             <td>
-                @if (loan.IsRendered is false)
-                {
-                    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Edit(loan.Id))">
-                        Rendu
+
+                <div class="input-group mb-3">
+                    @if (loan.IsRendered is false)
+                    {
+                        <button type="button" class="btn btn-outline-primary" @onclick="@(() => Edit(loan.Id))">
+                            Rendu
+                        </button>
+                    }
+                    <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
+                        <i class="bi bi-trash-fill"></i>
                     </button>
-                }
-                <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
-                    <i class="bi bi-trash-fill"></i>
-                </button>
+                </div>
 
             </td>
         </tr>
@@ -192,4 +195,5 @@
             loan.LoanStartDate,
             loan.LoanEndDate);
     }
+
 }
