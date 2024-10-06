@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -79,6 +80,11 @@ builder.Services.AddAuthorizationCore(options =>
     );
 
 var app = builder.Build();
+
+if (builder.Environment.IsEnvironment("Local"))
+{
+    StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
