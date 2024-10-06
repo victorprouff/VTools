@@ -14,6 +14,8 @@ using VTools.LoanAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddBlazorBootstrap();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -78,6 +80,7 @@ builder.Services.AddAuthorizationCore(options =>
             return false;
         }))
     );
+
 
 var app = builder.Build();
 
