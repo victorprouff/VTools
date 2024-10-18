@@ -1,0 +1,177 @@
+@page "/BadDaysHelper"
+@using System.Text.Json
+@using System.Text.RegularExpressions
+
+@rendermode InteractiveServer
+
+<h3>BadDays Helper</h3>
+
+<p>
+    <label>
+        Max file size:
+        <input type="number" @bind="_maxFileSize"/>
+    </label>
+</p>
+
+<p>
+    <label>
+        Max allowed files:
+        <input type="number" @bind="_maxAllowedFiles"/>
+    </label>
+</p>
+
+<p>
+    <label>
+        Upload up to @_maxAllowedFiles of up to @_maxFileSize bytes:
+        <InputFile OnChange="LoadFile" accept=".csv,.txt"/>
+    </label>
+</p>
+
+@if (_isLoading)
+{
+    <p>Uploading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Type</th>
+            <th>Url</th>
+            <th>Id</th>
+            <th>Origin</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var post in _postImports)
+        {
+            <tr>
+                <td>@post.Type</td>
+                <td>@post.Url</td>
+                <td>@post.Id</td>
+                <td>@post.Origin</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+@if (string.IsNullOrEmpty(_errorMessage) is false)
+{
+    <p>@_errorMessage</p>
+}
+
+@if (string.IsNullOrEmpty(_result) is false)
+{
+    <textarea class="form-control" aria-multiline="true" rows="20" aria-label="_result" aria-describedby="_result" @bind="@_result"></textarea>
+}
+
+@code {
+
+    // TODO : Amélioration :
+    // Créer une base de donnée dans laquelle sera stockée tous les posts (unicité sur l'id)
+    // Lister tous les posts
+    // A chaque nouveau fichier, lister comme c'est le cas ici tous nouveaux posts mais en décochant ceux qui sont déjà présent en base
+    // Et en prégénérant le fichier
+    // Dès qu'on coche ou décoche une ligne il regénère un result
+    // Un bouton pour save en base les nouvelles lignes et télécharger le fichier d'id
+    // Voir s'il est possible de se connecter à github pour push directement les modifications
+
+    private long _maxFileSize = 1024 * 15;
+    private int _maxAllowedFiles = 3;
+    private bool _isLoading;
+
+    private List<PostImport> _postImports = [];
+
+    private string _errorMessage = string.Empty;
+    private string _result = string.Empty;
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        _isLoading = true;
+
+        var file = e.GetMultipleFiles(_maxAllowedFiles).FirstOrDefault();
+
+        if (file is not null)
+        {
+            try
+            {
+                var stream = file.OpenReadStream();
+
+                using var reader = new StreamReader(stream);
+
+                var line = string.Empty;
+
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    ConvertToPostImport(line);
+                    Console.WriteLine(line);
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorMessage = $"File: {file.Name} Error: {ex.Message}";
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private void ConvertToPostImport(string line)
+    {
+        var result = line.Split("|");
+
+        _postImports.Add(new PostImport(result[0], result[1], result[2]));
+
+        ProcessResult();
+    }
+
+    private void ProcessResult()
+    {
+        _result = ConvertToJson(_postImports.Select(p => p.Id).ToArray());
+    }
+
+    private string ConvertToJson(string[] values)
+    {
+        var jsonObjectArray = new object[values.Length];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            jsonObjectArray[i] = new
+            {
+                Name = "",
+                Id = values[i],
+                Type = 3
+            };
+        }
+
+        return JsonSerializer.Serialize(jsonObjectArray, new JsonSerializerOptions
+        {
+            WriteIndented = true // pour une sortie JSON beautifiée
+        });
+    }
+
+    public class PostImport
+    {
+        public string Type { get; }
+        public string Url { get; }
+        public string Id { get; }
+        public string? Origin { get; }
+
+        public PostImport(string type, string url, string? origin)
+        {
+            Type = type;
+            Url = url;
+            Id = GetId(url);
+            Origin = origin;
+        }
+
+        private string GetId(string url)
+        {
+            const string pattern = @"(?:reel|p)\/([^\/?]+)";
+
+            var match = Regex.Match(url, pattern);
+            return match.Success ? match.Groups[1].Value : string.Empty;
+        }
+    }
+
+}
