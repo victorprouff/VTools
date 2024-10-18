@@ -1,11 +1,15 @@
 @page "/BadDaysHelper"
 @using System.Text.Json
 @using System.Text.RegularExpressions
+@using VTools.BadDayPostAggregate
+@using VTools.BadDayPostAggregate.Commands
 @inject IJSRuntime JsRuntime;
+@inject IBadDayPostDomain BadDayPostDomain;
 
 @rendermode InteractiveServer
 
-<h3>BadDays Helper</h3>
+<h2>BadDays Helper</h2>
+<h3>Import File</h3>
 
 <div class="input-group mb-3">
     <input type="number" class="form-control" placeholder="Max file size" @bind="_maxFileSize">
@@ -34,20 +38,26 @@ else
         </thead>
         <tbody>
         @foreach (var post in _postImports)
-        {
-            <tr>
-                <td>@post.Type</td>
-                <td>@post.Url</td>
-                <td>@post.Id</td>
-                <td>@post.Origin</td>
-                <td>
-                    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.Id))">Show</button>
+    {
+        <tr>
+            <td>@post.Type</td>
+            <td>@post.Url</td>
+            <td>@post.Id</td>
+            <td>@post.Origin</td>
+            <td>
+                <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.Id))">Show</button>
                 </td>
             </tr>
         }
         </tbody>
     </table>
 }
+
+<div class="input-group mb-3">
+    <input type="text" class="form-control" placeholder="Max file size" @bind="_idSelected">
+    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show())">Show</button>
+</div>
+
 @if (string.IsNullOrEmpty(_idSelected) is false)
 {
     <iframe src="https://www.instagram.com/p/@(_idSelected)/embed"
@@ -59,7 +69,6 @@ else
     </iframe>
 }
 
-
 @if (string.IsNullOrEmpty(_errorMessage) is false)
 {
     <p>@_errorMessage</p>
@@ -69,6 +78,9 @@ else
 {
     <textarea class="form-control" aria-multiline="true" rows="20" aria-label="_result" aria-describedby="_result" @bind="@_result"></textarea>
 }
+
+<h3>Show database</h3>
+<button type="button" class="btn btn-outline-primary" @onclick="@(() => Save())">Save In Database</button>
 
 @code {
 
@@ -133,19 +145,20 @@ else
 
     private void ProcessResult()
     {
-        _result = ConvertToJson(_postImports.Select(p => p.Id).ToArray());
+        _result = ConvertToJson(_postImports);
     }
 
-    private string ConvertToJson(string[] values)
+    private string ConvertToJson(List<PostImport> postImports)
     {
-        var jsonObjectArray = new object[values.Length];
+        var jsonObjectArray = new object[postImports.Count];
 
-        for (var i = 0; i < values.Length; i++)
+        for (var i = 0; i < postImports.Count; i++)
         {
             jsonObjectArray[i] = new
             {
-                Name = "",
-                Id = values[i],
+                Name = "Init import",
+                postImports[i].Url,
+                postImports[i].Id,
                 Type = 3
             };
         }
@@ -156,22 +169,17 @@ else
         });
     }
 
-    private async Task Show(string postId)
+    private async Task Show(string? postId = null)
     {
-        _idSelected = postId;
+        if (postId is not null)
+        {
+            _idSelected = postId;
+        }
 
         await JsRuntime.InvokeVoidAsync("refreshInstagramEmbed");
     }
 
-    /*
-    BadDayPostImport
-      - url
-      - instagramId
-      - type
-      - createdAt
 
-
-    */
     public class PostImport
     {
         public string Type { get; }
@@ -194,6 +202,18 @@ else
             var match = Regex.Match(url, pattern);
             return match.Success ? match.Groups[1].Value : string.Empty;
         }
+    }
+
+    private async Task Save()
+    {
+        foreach (var postImport in _postImports)
+        {
+            Console.WriteLine($"Import post : {postImport.Id}");
+
+            await BadDayPostDomain.CreateAsync(new CreateBadDayPostCommand(postImport.Id, postImport.Url));
+        }
+
+        Console.WriteLine("Finish !");
     }
 
 }
