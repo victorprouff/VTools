@@ -1,31 +1,20 @@
 @page "/BadDaysHelper"
 @using System.Text.Json
 @using System.Text.RegularExpressions
+@inject IJSRuntime JsRuntime;
 
 @rendermode InteractiveServer
 
 <h3>BadDays Helper</h3>
 
-<p>
-    <label>
-        Max file size:
-        <input type="number" @bind="_maxFileSize"/>
-    </label>
-</p>
-
-<p>
-    <label>
-        Max allowed files:
-        <input type="number" @bind="_maxAllowedFiles"/>
-    </label>
-</p>
-
-<p>
-    <label>
-        Upload up to @_maxAllowedFiles of up to @_maxFileSize bytes:
-        <InputFile OnChange="LoadFile" accept=".csv,.txt"/>
-    </label>
-</p>
+<div class="input-group mb-3">
+    <input type="number" class="form-control" placeholder="Max file size" @bind="_maxFileSize">
+    <input type="number" class="form-control" placeholder="Max allowed files" @bind="_maxAllowedFiles">
+    Upload up to @_maxAllowedFiles of up to @_maxFileSize bytes:
+    <InputFile class="btn btn-outline-success" id="button-addon2" OnChange="LoadFile" accept=".csv,.txt">
+        <i class="bi bi-plus"></i>
+    </InputFile>
+</div>
 
 @if (_isLoading)
 {
@@ -40,6 +29,7 @@ else
             <th>Url</th>
             <th>Id</th>
             <th>Origin</th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
@@ -50,11 +40,26 @@ else
                 <td>@post.Url</td>
                 <td>@post.Id</td>
                 <td>@post.Origin</td>
+                <td>
+                    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.Id))">Show</button>
+                </td>
             </tr>
         }
         </tbody>
     </table>
 }
+@if (string.IsNullOrEmpty(_idSelected) is false)
+{
+    <iframe src="https://www.instagram.com/p/@(_idSelected)/embed"
+            width="540"
+            height="600"
+            frameborder="0"
+            scrolling="no"
+            allowtransparency>
+    </iframe>
+}
+
+
 @if (string.IsNullOrEmpty(_errorMessage) is false)
 {
     <p>@_errorMessage</p>
@@ -84,6 +89,7 @@ else
 
     private string _errorMessage = string.Empty;
     private string _result = string.Empty;
+    private string _idSelected = string.Empty;
 
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
@@ -148,6 +154,13 @@ else
         {
             WriteIndented = true // pour une sortie JSON beautifiée
         });
+    }
+
+    private async Task Show(string postId)
+    {
+        _idSelected = postId;
+
+        await JsRuntime.InvokeVoidAsync("refreshInstagramEmbed");
     }
 
     public class PostImport
