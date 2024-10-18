@@ -1,7 +1,7 @@
 using VTools.LoanAggregate;
 using VTools.LoanAggregate.Projections;
 
-namespace VTools.Data.Repositories;
+namespace VTools.Data.Repositories.Interfaces;
 
 public interface ILoanRepository
 {

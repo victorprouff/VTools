@@ -1,5 +1,6 @@
 using Dapper;
 using VTools.Data.Entities;
+using VTools.Data.Repositories.Interfaces;
 using VTools.LoanAggregate;
 using VTools.LoanAggregate.Projections;
 

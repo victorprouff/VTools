@@ -1,5 +1,6 @@
 using NodaTime;
 using VTools.Data.Repositories;
+using VTools.Data.Repositories.Interfaces;
 using VTools.LoanAggregate.Models;
 using VTools.LoanAggregate.Projections;
 
