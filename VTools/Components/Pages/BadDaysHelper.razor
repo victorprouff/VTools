@@ -14,10 +14,10 @@
 <div class="input-group mb-3">
     <input type="number" class="form-control" placeholder="Max file size" @bind="_maxFileSize">
     <input type="number" class="form-control" placeholder="Max allowed files" @bind="_maxAllowedFiles">
-    Upload up to @_maxAllowedFiles of up to @_maxFileSize bytes:
     <InputFile class="btn btn-outline-success" id="button-addon2" OnChange="LoadFile" accept=".csv,.txt">
         <i class="bi bi-plus"></i>
     </InputFile>
+    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Save())">Save In Database</button>
 </div>
 
 @if (_isLoading)
@@ -26,35 +26,70 @@
 }
 else
 {
+    <div class="table-responsive table-max-height">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Url</th>
+                <th>Id</th>
+                <th>Origin</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var post in _postImports)
+            {
+                <tr class="@(post.IsExist ? "table-danger" : "")">
+                    <td>@post.Type</td>
+                    <td>@post.Url</td>
+                    <td>@post.InstagramId</td>
+                    <td>@post.Origin</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.InstagramId))">Show</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h3>Show database</h3>
+<div class="input-group mb-3">
+    <input type="text" class="form-control" placeholder="Search InstagramId or Url" @bind="_search" @oninput="@(e => SearchPosts(e.Value))"/>
+    <button type="button" class="btn btn-outline-primary" @onclick="@(() => ConvertToJson())">Convert To Json</button>
+</div>
+
+<div class="table-responsive table-max-height">
     <table class="table">
         <thead>
         <tr>
-            <th>Type</th>
             <th>Url</th>
             <th>Id</th>
-            <th>Origin</th>
+            <th>Created At</th>
             <th></th>
         </tr>
         </thead>
         <tbody>
-        @foreach (var post in _postImports)
-    {
-        <tr>
-            <td>@post.Type</td>
-            <td>@post.Url</td>
-            <td>@post.Id</td>
-            <td>@post.Origin</td>
-            <td>
-                <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.Id))">Show</button>
+        @foreach (var post in _searchedPosts)
+        {
+            <tr>
+                <td>@post.Url</td>
+                <td>@post.InstagramId</td>
+                <td>@post.CreatedAt</td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(post.Id))">Delete</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show(post.InstagramId))">Show</button>
                 </td>
             </tr>
         }
         </tbody>
     </table>
-}
+</div>
 
 <div class="input-group mb-3">
-    <input type="text" class="form-control" placeholder="Max file size" @bind="_idSelected">
+    <input type="text" class="form-control" placeholder="Instagram Id" @bind="_idSelected">
     <button type="button" class="btn btn-outline-primary" @onclick="@(() => Show())">Show</button>
 </div>
 
@@ -79,18 +114,9 @@ else
     <textarea class="form-control" aria-multiline="true" rows="20" aria-label="_result" aria-describedby="_result" @bind="@_result"></textarea>
 }
 
-<h3>Show database</h3>
-<button type="button" class="btn btn-outline-primary" @onclick="@(() => Save())">Save In Database</button>
-
 @code {
 
     // TODO : Amélioration :
-    // Créer une base de donnée dans laquelle sera stockée tous les posts (unicité sur l'id)
-    // Lister tous les posts
-    // A chaque nouveau fichier, lister comme c'est le cas ici tous nouveaux posts mais en décochant ceux qui sont déjà présent en base
-    // Et en prégénérant le fichier
-    // Dès qu'on coche ou décoche une ligne il regénère un result
-    // Un bouton pour save en base les nouvelles lignes et télécharger le fichier d'id
     // Voir s'il est possible de se connecter à github pour push directement les modifications
 
     private long _maxFileSize = 1024 * 15;
@@ -98,10 +124,27 @@ else
     private bool _isLoading;
 
     private List<PostImport> _postImports = [];
+    private List<BadDayPost> _posts = [];
+    private List<BadDayPost> _searchedPosts = [];
 
     private string _errorMessage = string.Empty;
     private string _result = string.Empty;
     private string _idSelected = string.Empty;
+    private string _search = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await LoadPosts();
+    }
+
+    private async Task LoadPosts()
+    {
+        var result = await BadDayPostDomain.GetAllAsync();
+
+        _searchedPosts = _posts = result.ToList();
+    }
 
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
@@ -122,7 +165,6 @@ else
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
                     ConvertToPostImport(line);
-                    Console.WriteLine(line);
                 }
             }
             catch (Exception ex)
@@ -134,39 +176,13 @@ else
         _isLoading = false;
     }
 
-    private void ConvertToPostImport(string line)
+    private void SearchPosts(object? value)
     {
-        var result = line.Split("|");
+        var search = value is null ? string.Empty : (string)value;
 
-        _postImports.Add(new PostImport(result[0], result[1], result[2]));
-
-        ProcessResult();
-    }
-
-    private void ProcessResult()
-    {
-        _result = ConvertToJson(_postImports);
-    }
-
-    private string ConvertToJson(List<PostImport> postImports)
-    {
-        var jsonObjectArray = new object[postImports.Count];
-
-        for (var i = 0; i < postImports.Count; i++)
-        {
-            jsonObjectArray[i] = new
-            {
-                Name = "Init import",
-                postImports[i].Url,
-                postImports[i].Id,
-                Type = 3
-            };
-        }
-
-        return JsonSerializer.Serialize(jsonObjectArray, new JsonSerializerOptions
-        {
-            WriteIndented = true // pour une sortie JSON beautifiée
-        });
+        _searchedPosts = _posts.Where(p =>
+            p.InstagramId.Contains(search, StringComparison.InvariantCultureIgnoreCase) ||
+            p.Url.Contains(search, StringComparison.InvariantCultureIgnoreCase)).ToList();
     }
 
     private async Task Show(string? postId = null)
@@ -179,41 +195,89 @@ else
         await JsRuntime.InvokeVoidAsync("refreshInstagramEmbed");
     }
 
+    private async Task Delete(Guid? id = null)
+    {
+        if (id is null)
+        {
+            return;
+        }
+
+        _search = string.Empty;
+
+        await BadDayPostDomain.DeleteAsync((Guid)id);
+
+        await LoadPosts();
+    }
+
+    private async Task Save()
+    {
+        var postsToSave = _postImports.Where(p => p.IsExist is false).ToList();
+        foreach (var postImport in postsToSave)
+        {
+            await BadDayPostDomain.CreateAsync(new CreateBadDayPostCommand(postImport.Url, postImport.InstagramId));
+        }
+
+        if (postsToSave.Any())
+        {
+            await LoadPosts();
+            _postImports = [];
+        }
+    }
+
+    private void ConvertToPostImport(string line)
+    {
+        var result = line.Split("|");
+
+        var type = result[0];
+        var url = result[1];
+        var origin = result[2];
+        var instagramId = GetInstagramId(url);
+
+        var isExist = _posts.Any(p => p.InstagramId == instagramId);
+
+        _postImports.Add(new PostImport(type, url, instagramId, isExist, origin));
+    }
+
+    private static string GetInstagramId(string url)
+    {
+        const string pattern = @"(?:reel|p)\/([^\/?]+)";
+
+        var match = Regex.Match(url, pattern);
+        return match.Success ? match.Groups[1].Value : string.Empty;
+    }
+
+    private void ConvertToJson()
+    {
+        var jsonObjectArray = _posts.Select(item => new
+        {
+            Name = "Init import",
+            item.Url,
+            Id = item.InstagramId,
+            Type = 1
+        });
+
+        _result = JsonSerializer.Serialize(jsonObjectArray, new JsonSerializerOptions
+        {
+            WriteIndented = true // pour une sortie JSON beautifiée
+        });
+    }
 
     public class PostImport
     {
         public string Type { get; }
         public string Url { get; }
-        public string Id { get; }
+        public string InstagramId { get; }
+        public bool IsExist { get; }
         public string? Origin { get; }
 
-        public PostImport(string type, string url, string? origin)
+        public PostImport(string type, string url, string instagramId, bool isExist, string? origin)
         {
             Type = type;
             Url = url;
-            Id = GetId(url);
+            InstagramId = instagramId;
+            IsExist = isExist;
             Origin = origin;
         }
-
-        private string GetId(string url)
-        {
-            const string pattern = @"(?:reel|p)\/([^\/?]+)";
-
-            var match = Regex.Match(url, pattern);
-            return match.Success ? match.Groups[1].Value : string.Empty;
-        }
-    }
-
-    private async Task Save()
-    {
-        foreach (var postImport in _postImports)
-        {
-            Console.WriteLine($"Import post : {postImport.Id}");
-
-            await BadDayPostDomain.CreateAsync(new CreateBadDayPostCommand(postImport.Id, postImport.Url));
-        }
-
-        Console.WriteLine("Finish !");
     }
 
 }

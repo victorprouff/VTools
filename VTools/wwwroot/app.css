@@ -1,3 +1,8 @@
+.table-max-height {
+    max-height: 500px;
+    margin-bottom: 30px;
+}
+
 /*html, body {*/
 /*    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;*/
 /*}*/
