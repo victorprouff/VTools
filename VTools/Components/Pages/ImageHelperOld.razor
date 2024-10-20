@@ -1,0 +1,224 @@
+@page "/ImageHelperOld"
+
+@using SixLabors.ImageSharp.PixelFormats
+@using SixLabors.ImageSharp.Processing
+@using SixLabors.ImageSharp;
+@using SixLabors.ImageSharp.Drawing.Processing
+@using SixLabors.ImageSharp.Formats.Webp
+@using Image = SixLabors.ImageSharp.Image
+@inject IJSRuntime Js
+@rendermode InteractiveServer
+
+<h3>ImageHelper</h3>
+
+<div class="input-group mb-3">
+    <Button class="btn btn-outline-success" @onclick="CreateImage">Generate Image</Button>
+    <InputFile class="btn btn-outline-success" id="button-addon2" multiple OnChange="LoadFile" accept=".jpg,.png,.gif">
+        Charger une image
+    </InputFile>
+</div>
+
+<div class="input-group mb-3">
+    <InputFile class="btn btn-outline-primary" OnChange="LoadFile1" accept=".jpg,.png,.gif"></InputFile>
+    <InputFile class="btn btn-outline-primary" OnChange="LoadFile2" accept=".jpg,.png,.gif"></InputFile>
+    <Button class="btn btn-outline-success" @onclick="CreateImage2">Generate Image</Button>
+</div>
+
+<div class="p-3">
+    <img id="myImage" alt="" src=""/>
+</div>
+
+@if (IsNotNullOrWhiteSpace(_logMessage))
+{
+    <p>
+        @_logMessage
+    </p>
+}
+
+@code {
+    private string _logMessage = string.Empty;
+    private const long MaxFileSizeOld = 10L * 1024L * 1024L;
+
+    private Image<Rgba32>? _image1 = null;
+    private Image<Rgba32>? _image2 = null;
+
+    private async Task LoadFileClassic(InputFileChangeEventArgs e)
+    {
+        var file = e.GetMultipleFiles(1).FirstOrDefault();
+
+        if (file is not null)
+        {
+            try
+            {
+                var stream = file.OpenReadStream(maxAllowedSize: MaxFileSizeOld);
+
+                var strRef = new DotNetStreamReference(stream);
+
+                await Js.InvokeVoidAsync("setSource", "myImage", strRef, file.ContentType);
+            }
+            catch (Exception ex)
+            {
+                _logMessage = $"File: {file.Name} Error: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles(2);
+
+        if (files.Any() && files.Count == 2)
+        {
+            try
+            {
+                var images = new List<Image<Rgba32>>();
+                var streams = new List<Stream>();
+
+                foreach (var file in files)
+                {
+                    var stream = file.OpenReadStream(maxAllowedSize: MaxFileSizeOld);
+
+                    stream.Position = 0;
+                    var img = (Image<Rgba32>)await Image.LoadAsync(stream);
+
+                    images.Add(img);
+                }
+
+                // var img1 = (Image<Rgba32>)await Image.LoadAsync(streams[0]);
+                // var img2 = (Image<Rgba32>)await Image.LoadAsync(streams[1]);
+
+                await ProcessImage(images[0], images[1]);
+            }
+            catch (Exception ex)
+            {
+                _logMessage = $"File: Error: {ex.Message}";
+            }
+        }
+    }
+
+    private async void LoadFile1(InputFileChangeEventArgs e)
+    {
+        var file = e.GetMultipleFiles(1).FirstOrDefault();
+
+        if (file is null) return;
+
+        try
+        {
+            var stream = file.OpenReadStream(maxAllowedSize: MaxFileSizeOld);
+
+            using var image = await Image.LoadAsync<Rgba32>(stream);
+            _image1 = image;
+        }
+        catch (Exception ex)
+        {
+            _logMessage = $"File: {file.Name} Error: {ex.Message}";
+        }
+    }
+
+    private async void LoadFile2(InputFileChangeEventArgs e)
+    {
+        var file = e.GetMultipleFiles(1).FirstOrDefault();
+
+        if (file is null) return;
+
+        try
+        {
+            var stream = file.OpenReadStream(maxAllowedSize: MaxFileSizeOld);
+
+            using var image = await Image.LoadAsync<Rgba32>(stream);
+            _image2 = image;
+        }
+        catch (Exception ex)
+        {
+            _logMessage = $"File: {file.Name} Error: {ex.Message}";
+        }
+    }
+
+    private async void CreateImage()
+    {
+        var img = CreateBlankImage(500, 500);
+
+        DrawTriangleOnImage(img, new PointF(10, 15), new PointF(100, 30), new PointF(200, 150));
+
+        await ShowImage(img);
+    }
+
+    private async void CreateImage2()
+    {
+        if (_image1 is not null && _image2 is not null)
+        {
+            await ProcessImage(_image1, _image2);
+        }
+    }
+
+    public static void SaveImage(Image<Rgba32> image, string outputPath)
+    {
+        image.SaveAsPng(outputPath);
+    }
+
+    private async Task ShowImage(Image<Rgba32> image)
+    {
+        var webPStream = await ImageToStream(image);
+
+        var strRef = new DotNetStreamReference(webPStream);
+
+        await Js.InvokeVoidAsync("setSource", "myImage", strRef);
+    }
+
+    private static async Task<MemoryStream> ImageToStream(Image<Rgba32> image)
+    {
+        var webPStream = new MemoryStream();
+
+        await image.SaveAsync(webPStream, new WebpEncoder { Quality = 80 }); // similar image.SaveAsWebp(webPStream);
+        webPStream.Position = 0;
+        return webPStream;
+    }
+
+    private static Image<Rgba32> CreateBlankImage(int width, int height)
+    {
+        return new Image<Rgba32>(width, height);
+    }
+
+    private static void DrawTriangleOnImage(Image<Rgba32> image, PointF point1, PointF point2, PointF point3)
+    {
+        ValidatePoint(point1);
+        ValidatePoint(point2);
+        ValidatePoint(point3);
+
+        var pen = Pens.Solid(Color.Red, 3);
+        image.Mutate(ctx => ctx.DrawPolygon(pen, point1, point2, point3, point1));
+    }
+
+    private static void ValidatePoint(PointF point)
+    {
+        if (point.X <= 0 || point.Y <= 0)
+        {
+            throw new ArgumentException("Point coordinates cannot be less than or equal to zero.");
+        }
+    }
+
+    private async Task ProcessImage(Image<Rgba32> img1, Image<Rgba32> img2)
+    {
+        // using var img1 = Image.Load<Rgba32>("source1.png");
+        // using var img2 = Image.Load<Rgba32>("source2.png");
+        using var outputImage = new Image<Rgba32>(200, 150);
+
+        // reduce source images to correct dimensions
+        // skip if already correct size
+        // if you need to use source images else where use Clone and take the result instead
+        img1.Mutate(o => o.Resize(new Size(100, 150)));
+        img2.Mutate(o => o.Resize(new Size(100, 150)));
+
+        // take the 2 source images and draw them onto the image
+        outputImage.Mutate(o => o
+                .DrawImage(img1, new Point(0, 0), 1f) // draw the first one top left
+                .DrawImage(img2, new Point(100, 0), 1f) // draw the second next to it
+        );
+
+        await ShowImage(outputImage);
+        outputImage.Save("ouput.png");
+    }
+
+    private bool IsNotNullOrWhiteSpace(string value) => string.IsNullOrWhiteSpace(value);
+
+}
