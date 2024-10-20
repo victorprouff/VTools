@@ -6,22 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet"/>
 
     <link rel="stylesheet" href="app.css"/>
     <link rel="stylesheet" href="VTools.styles.css"/>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
     <link rel="icon" type="image/png" href="favicon.png"/>
-    <HeadOutlet @rendermode="@InteractiveServer" />
+    <HeadOutlet @rendermode="@InteractiveServer"/>
 
     <title>VTools</title>
 </head>
 
 <body>
-<Routes />
-
+<Routes/>
 
 <script>
     window.refreshInstagramEmbed = function() {
@@ -29,7 +28,23 @@
             window.instgrm.Embeds.process();
         }
     }
+    window.setSource = async (elementId, stream, contentType, title) => {
+        const arrayBuffer = await stream.arrayBuffer();
+        let blobOptions = {};
+        if (contentType) {
+        blobOptions['type'] = contentType;
+    }
+    const blob = new Blob([arrayBuffer], blobOptions);
+    const url = URL.createObjectURL(blob);
+    const element = document.getElementById(elementId);
+    element.title = title;
+    element.onload = () => {
+        URL.revokeObjectURL(url);
+    }
+        element.src = url;
+    }
 </script>
+
 <script async src="//www.instagram.com/embed.js"></script>
 
 <script src="_framework/blazor.web.js"></script>

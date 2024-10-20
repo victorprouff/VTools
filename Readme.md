@@ -37,3 +37,7 @@ https://docs.blazorbootstrap.com/getting-started/blazor-webapp-server-global-net
 ### Solution 2
 - https://getbootstrap.com/docs/5.3/components/offcanvas/#live-demo
 - https://getbootstrap.com/docs/5.1/components/navbar/
+
+### Genération et gestion d'image en .net
+- https://docs.sixlabors.com/articles/imagesharp.drawing/gettingstarted.html
+- Image to stream : https://plavos.com/blog/imagesharp-cheatsheet/

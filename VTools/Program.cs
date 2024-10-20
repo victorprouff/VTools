@@ -53,6 +53,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddTransient<IClock, SystemClock>(_ => SystemClock.Instance);
 
 builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
