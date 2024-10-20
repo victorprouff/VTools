@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbMigration", "DbMigration\DbMigration.csproj", "{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample", "Sample\Sample.csproj", "{70348459-99FB-4871-BC7E-03C84A0492E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{898C2815-2D5B-4B3A-AEB3-BDC0D7836668}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70348459-99FB-4871-BC7E-03C84A0492E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70348459-99FB-4871-BC7E-03C84A0492E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70348459-99FB-4871-BC7E-03C84A0492E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70348459-99FB-4871-BC7E-03C84A0492E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
