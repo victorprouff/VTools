@@ -1,5 +1,8 @@
 @page "/ImageHelper"
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.Formats
 @using SixLabors.ImageSharp.Formats.Webp
+@using SixLabors.ImageSharp.PixelFormats
 @using Image = SixLabors.ImageSharp.Image
 @inject IJSRuntime Js
 @rendermode InteractiveServer
@@ -10,18 +13,36 @@
     <InputFile class="btn btn-outline-success" id="button-addon2" multiple OnChange="LoadFile" accept=".jpg,.png,.gif">
         Charger une image
     </InputFile>
-    @* <Button class="btn btn-outline-success" @onclick="Rotate(90)">90°</Button> *@
-    @* <Button class="btn btn-outline-success" @onclick="Rotate(180)">180°</Button> *@
-    @* <Button class="btn btn-outline-success" @onclick="Rotate(270)">270°</Button> *@
+</div>
+<div class="input-group mb-3">
+    <Button class="btn btn-outline-success" @onclick="@(() => RotateLess90())">
+        <i class="bi bi-arrow-counterclockwise"></i>
+    </Button>
+    <Button class="btn btn-outline-success" @onclick="@(() => ChooseColor())">
+        <i class="bi bi-palette"></i>
+    </Button>
+    <Button class="btn btn-outline-success" @onclick="@(() => RotateMore90())">
+        <i class="bi bi-arrow-clockwise"></i>
+    </Button>
+
 </div>
 
-<div class="p-3">
-    <img id="myImage" alt="" src=""/>
+<div style="border: 5px solid #ccc; width: 500px; height: 500px; display: flex;
+justify-content: center;  align-items: center; @_imgBackGroundColor">
+    <img id="myImage" alt="" src="" style="max-width: 100%; max-height: 100%; @_imgTransform"/>
 </div>
+
+<button class="btn btn-outline-success" @onclick="DownloadFile">Download File</button>
+
 
 @code {
     private const long MaxFileSize = 10L * 1024L * 1024L;
-    private Image? _image;
+    private Image? _imageSource;
+    private int _imgRotation;
+    private string _imgTransform = "background-color: #ffffff;";
+    private bool _imgColorIsWhite = true;
+
+    private string _imgBackGroundColor = string.Empty;
 
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
@@ -33,10 +54,10 @@
             {
                 var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize);
 
-                using var image = await Image.LoadAsync(stream);
-                _image = image;
+                // _imageSource = await StreamToImage(stream);
 
-                await ShowImage();
+                await ShowImage(stream);
+
             }
             catch (Exception ex)
             {
@@ -45,13 +66,10 @@
         }
     }
 
-    private async Task ShowImage()
+    private async Task ShowImage(Stream stream)
     {
-        if (_image is null) return;
-
-        var webPStream = await ImageToStream(_image);
-
-        var strRef = new DotNetStreamReference(webPStream);
+        var strRef = new DotNetStreamReference(stream);
+        // stream.Position = 0;
 
         await Js.InvokeVoidAsync("setSource", "myImage", strRef);
     }
@@ -62,6 +80,77 @@
 
         await image.SaveAsync(webPStream, new WebpEncoder { Quality = 80 }); // similar image.SaveAsWebp(webPStream);
         webPStream.Position = 0;
+
         return webPStream;
     }
+
+    private static async Task<Image> StreamToImage(Stream stream)
+    {
+        // imageFile.CopyTo(stream);
+
+        var format = await Image.DetectFormatAsync(stream);
+
+        // var decodeOption = new DecoderOptions
+        // {
+        //     Configuration = new Configuration
+        //     {
+        //         ImageFormats = new List<IImageFormat>()
+        //     }
+        // };
+        //
+        // var image = await Image.LoadAsync(
+        //     decodeOption,
+        //     stream);
+
+        var image = await Image.LoadAsync(stream);
+
+        return image;
+    }
+
+    private void RotateMore90()
+    {
+        _imgRotation += 90;
+
+        if (_imgRotation >= 360)
+        {
+            _imgRotation = 0;
+        }
+
+        SetImgTransform();
+    }
+
+    private void RotateLess90()
+    {
+        if (_imgRotation <= 0)
+        {
+            _imgRotation = 360;
+        }
+
+        _imgRotation -= 90;
+
+        SetImgTransform();
+    }
+
+    private void SetImgTransform()
+    {
+        _imgTransform = _imgRotation == 0 ? "transform: rotate(0);" : $"transform: rotate({_imgRotation}deg)";
+    }
+
+    private void ChooseColor()
+    {
+        _imgBackGroundColor = _imgColorIsWhite ? "background-color: #000000;" : "background-color: #ffffff;";
+        _imgColorIsWhite = !_imgColorIsWhite;
+    }
+
+    private async Task DownloadFile()
+    {
+        if (_imageSource is null) return;
+// non fonctionnel
+        var stream = await ImageToStream(_imageSource);
+
+        using var streamRef = new DotNetStreamReference(stream: stream);
+
+        await Js.InvokeVoidAsync("downloadFileFromStream", stream, streamRef);
+    }
+
 }
