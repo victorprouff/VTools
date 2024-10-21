@@ -1,8 +1,5 @@
 @page "/ImageHelper"
-@using SixLabors.ImageSharp
-@using SixLabors.ImageSharp.Formats
 @using SixLabors.ImageSharp.Formats.Webp
-@using SixLabors.ImageSharp.PixelFormats
 @using Image = SixLabors.ImageSharp.Image
 @inject IJSRuntime Js
 @rendermode InteractiveServer
@@ -54,9 +51,9 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
             {
                 var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize);
 
-                // _imageSource = await StreamToImage(stream);
+                _imageSource = await StreamToImage(stream);
 
-                await ShowImage(stream);
+                await ShowImage(await ImageToStream(_imageSource));
 
             }
             catch (Exception ex)
@@ -86,23 +83,12 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
 
     private static async Task<Image> StreamToImage(Stream stream)
     {
-        // imageFile.CopyTo(stream);
-
-        var format = await Image.DetectFormatAsync(stream);
-
-        // var decodeOption = new DecoderOptions
-        // {
-        //     Configuration = new Configuration
-        //     {
-        //         ImageFormats = new List<IImageFormat>()
-        //     }
-        // };
-        //
-        // var image = await Image.LoadAsync(
-        //     decodeOption,
-        //     stream);
-
         var image = await Image.LoadAsync(stream);
+        // Create a deep copy of the given image, resize it, and return it for chaining.
+        // using (Image copy = image.Clone(x => x.Resize(image.Width / 2, image.Height / 2)))
+        // {
+        //     copy.Save(outStream, new PngEncoder());
+        // }
 
         return image;
     }
@@ -149,8 +135,9 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
         var stream = await ImageToStream(_imageSource);
 
         using var streamRef = new DotNetStreamReference(stream: stream);
-
-        await Js.InvokeVoidAsync("downloadFileFromStream", stream, streamRef);
+        {
+            await Js.InvokeVoidAsync("downloadFileFromStream", stream, streamRef);
+        }
     }
 
 }
