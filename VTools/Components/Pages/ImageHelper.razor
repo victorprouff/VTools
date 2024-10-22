@@ -1,5 +1,8 @@
 @page "/ImageHelper"
+@using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Formats.Webp
+@using SixLabors.ImageSharp.PixelFormats
+@using SixLabors.ImageSharp.Processing
 @using Image = SixLabors.ImageSharp.Image
 @inject IJSRuntime Js
 @rendermode InteractiveServer
@@ -35,10 +38,10 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
 @code {
     private const long MaxFileSize = 10L * 1024L * 1024L;
     private Image? _imageSource;
+    private string _fileName = string.Empty;
     private int _imgRotation;
-    private string _imgTransform = "background-color: #ffffff;";
+    private string _imgTransform = string.Empty;
     private bool _imgColorIsWhite = true;
-
     private string _imgBackGroundColor = string.Empty;
 
     private async Task LoadFile(InputFileChangeEventArgs e)
@@ -50,11 +53,11 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
             try
             {
                 var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize);
+                _fileName = file.Name;
 
                 _imageSource = await StreamToImage(stream);
 
                 await ShowImage(await ImageToStream(_imageSource));
-
             }
             catch (Exception ex)
             {
@@ -66,16 +69,18 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
     private async Task ShowImage(Stream stream)
     {
         var strRef = new DotNetStreamReference(stream);
-        // stream.Position = 0;
 
         await Js.InvokeVoidAsync("setSource", "myImage", strRef);
     }
 
-    private static async Task<MemoryStream> ImageToStream(Image image)
+    private static async Task<MemoryStream> ImageToStream(Image image, int quality = 80)
     {
         var webPStream = new MemoryStream();
 
-        await image.SaveAsync(webPStream, new WebpEncoder { Quality = 80 }); // similar image.SaveAsWebp(webPStream);
+        await image.SaveAsync(webPStream, new WebpEncoder
+        {
+            Quality = quality
+        });
         webPStream.Position = 0;
 
         return webPStream;
@@ -83,14 +88,7 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
 
     private static async Task<Image> StreamToImage(Stream stream)
     {
-        var image = await Image.LoadAsync(stream);
-        // Create a deep copy of the given image, resize it, and return it for chaining.
-        // using (Image copy = image.Clone(x => x.Resize(image.Width / 2, image.Height / 2)))
-        // {
-        //     copy.Save(outStream, new PngEncoder());
-        // }
-
-        return image;
+        return await Image.LoadAsync(stream);
     }
 
     private void RotateMore90()
@@ -131,12 +129,34 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
     private async Task DownloadFile()
     {
         if (_imageSource is null) return;
-// non fonctionnel
-        var stream = await ImageToStream(_imageSource);
+
+        ProcessImage();
+        var stream = await ImageToStream(_imageSource, 100);
 
         using var streamRef = new DotNetStreamReference(stream: stream);
         {
-            await Js.InvokeVoidAsync("downloadFileFromStream", stream, streamRef);
+            await Js.InvokeVoidAsync("downloadFileFromStream", _fileName, streamRef);
+        }
+    }
+
+    private void ProcessImage()
+    {
+        _imageSource?.Mutate(x => x
+            .Resize(new ResizeOptions
+            {
+                Size = new Size(1080, 1080),
+                Mode = ResizeMode.Pad
+            }));
+
+        _imageSource?.Mutate(img => img.Rotate(_imgRotation));
+
+        if (_imgColorIsWhite)
+        {
+            _imageSource?.Mutate(img => img.BackgroundColor(Color.White));
+        }
+        else
+        {
+            _imageSource?.Mutate(img => img.BackgroundColor(Color.Black));
         }
     }
 
