@@ -1,6 +1,6 @@
-namespace VTools.Components;
+namespace VTools.Components.Services;
 
-public class Rotate(int value = 0)
+public class RotateService(int value = 0)
 {
     public int Value { get; private set; } = value;
 

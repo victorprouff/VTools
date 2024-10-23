@@ -1,9 +1,10 @@
 @page "/ImageHelper"
 @using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Formats.Webp
-@using SixLabors.ImageSharp.PixelFormats
 @using SixLabors.ImageSharp.Processing
+@using VTools.Components.Services
 @using Image = SixLabors.ImageSharp.Image
+@inject IWebHostEnvironment Environment
 @inject IJSRuntime Js
 @rendermode InteractiveServer
 
@@ -40,26 +41,37 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
     private Image? _imageSource;
     private string _fileName = string.Empty;
 
-    private readonly Rotate _imgRotation = new();
+    private readonly RotateService _imgRotation = new();
     private string _imgTransform = string.Empty;
 
     private bool _imgColorIsWhite = true;
     private string _imgBackGroundColor = string.Empty;
 
+    protected override Task OnInitializedAsync()
+    {
+        FileService.DeleteTempFiles(Environment.ContentRootPath);
+
+        return base.OnInitializedAsync();
+    }
+
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
-        var file = e.GetMultipleFiles().FirstOrDefault();
+        var file = e.GetMultipleFiles(1).FirstOrDefault();
 
         if (file is not null)
         {
             try
             {
-                var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize);
+                var path = FileService.GetTempFileName(Environment.ContentRootPath);
+
+                await using FileStream fs = new(path, FileMode.Create);
+                await file.OpenReadStream(MaxFileSize).CopyToAsync(fs);
+
                 _fileName = file.Name;
 
-                _imageSource = await StreamToImage(stream);
+                _imageSource = await StreamToImage(file);
 
-                await ShowImage(await ImageToStream(_imageSource));
+                await ShowImage(file);
             }
             catch (Exception ex)
             {
@@ -68,9 +80,9 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
         }
     }
 
-    private async Task ShowImage(Stream stream)
+    private async Task ShowImage(IBrowserFile browserFile)
     {
-        var strRef = new DotNetStreamReference(stream);
+        var strRef = new DotNetStreamReference(browserFile.OpenReadStream(MaxFileSize));
 
         await Js.InvokeVoidAsync("setSource", "myImage", strRef);
     }
@@ -88,35 +100,8 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
         return webPStream;
     }
 
-    private static async Task<Image> StreamToImage(Stream stream)
-    {
-        return await Image.LoadAsync(stream);
-    }
-
-    private void RotateMore90()
-    {
-        _imgRotation.RotateMore90();
-
-        SetImgTransform();
-    }
-
-    private void RotateLess90()
-    {
-        _imgRotation.RotateLess90();
-
-        SetImgTransform();
-    }
-
-    private void SetImgTransform()
-    {
-        _imgTransform = _imgRotation.GetRotateTransform();
-    }
-
-    private void ChooseColor()
-    {
-        _imgBackGroundColor = _imgColorIsWhite ? "background-color: #000000;" : "background-color: #ffffff;";
-        _imgColorIsWhite = !_imgColorIsWhite;
-    }
+    private static async Task<Image> StreamToImage(IBrowserFile browserFile) =>
+        await Image.LoadAsync(browserFile.OpenReadStream(MaxFileSize));
 
     private async Task DownloadFile()
     {
@@ -150,5 +135,30 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
         {
             _imageSource?.Mutate(img => img.BackgroundColor(Color.Black));
         }
+    }
+
+    private void RotateMore90()
+    {
+        _imgRotation.RotateMore90();
+
+        SetImgTransform();
+    }
+
+    private void RotateLess90()
+    {
+        _imgRotation.RotateLess90();
+
+        SetImgTransform();
+    }
+
+    private void SetImgTransform()
+    {
+        _imgTransform = _imgRotation.GetRotateTransform();
+    }
+
+    private void ChooseColor()
+    {
+        _imgBackGroundColor = _imgColorIsWhite ? "background-color: #000000;" : "background-color: #ffffff;";
+        _imgColorIsWhite = !_imgColorIsWhite;
     }
 }
