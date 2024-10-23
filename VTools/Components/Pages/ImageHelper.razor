@@ -39,8 +39,10 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
     private const long MaxFileSize = 10L * 1024L * 1024L;
     private Image? _imageSource;
     private string _fileName = string.Empty;
-    private int _imgRotation;
+
+    private readonly Rotate _imgRotation = new();
     private string _imgTransform = string.Empty;
+
     private bool _imgColorIsWhite = true;
     private string _imgBackGroundColor = string.Empty;
 
@@ -93,31 +95,21 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
 
     private void RotateMore90()
     {
-        _imgRotation += 90;
-
-        if (_imgRotation >= 360)
-        {
-            _imgRotation = 0;
-        }
+        _imgRotation.RotateMore90();
 
         SetImgTransform();
     }
 
     private void RotateLess90()
     {
-        if (_imgRotation <= 0)
-        {
-            _imgRotation = 360;
-        }
-
-        _imgRotation -= 90;
+        _imgRotation.RotateLess90();
 
         SetImgTransform();
     }
 
     private void SetImgTransform()
     {
-        _imgTransform = _imgRotation == 0 ? "transform: rotate(0);" : $"transform: rotate({_imgRotation}deg)";
+        _imgTransform = _imgRotation.GetRotateTransform();
     }
 
     private void ChooseColor()
@@ -148,7 +140,7 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
                 Mode = ResizeMode.Pad
             }));
 
-        _imageSource?.Mutate(img => img.Rotate(_imgRotation));
+        _imageSource?.Mutate(img => img.Rotate(_imgRotation.Value));
 
         if (_imgColorIsWhite)
         {
@@ -159,5 +151,4 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
             _imageSource?.Mutate(img => img.BackgroundColor(Color.Black));
         }
     }
-
 }
