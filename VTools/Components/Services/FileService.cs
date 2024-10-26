@@ -14,6 +14,6 @@ public static class FileService
         }
     }
 
-    public static string GetTempDirectoryPath(string contentRootPath) =>
+    private static string GetTempDirectoryPath(string contentRootPath) =>
         Path.Combine(contentRootPath, "files_temp");
 }

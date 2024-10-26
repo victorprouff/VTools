@@ -15,28 +15,43 @@
         Charger une image
     </InputFile>
 </div>
-<div class="input-group mb-3">
-    <Button class="btn btn-outline-success" @onclick="@(() => RotateLess90())">
-        <i class="bi bi-arrow-counterclockwise"></i>
-    </Button>
-    <Button class="btn btn-outline-success" @onclick="@(() => ChooseColor())">
-        <i class="bi bi-palette"></i>
-    </Button>
-    <Button class="btn btn-outline-success" @onclick="@(() => RotateMore90())">
-        <i class="bi bi-arrow-clockwise"></i>
-    </Button>
 
-</div>
+@if (_isLoading)
+{
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="@_loadingValue" aria-valuemin="0" aria-valuemax="100">25%</div>
+    </div>
+}
+else
+{
+    <div class="input-group mb-3">
+        <Button class="btn btn-outline-success" @onclick="@(() => RotateLess90())">
+            <i class="bi bi-arrow-counterclockwise"></i>
+        </Button>
+        <Button class="btn btn-outline-success" @onclick="@(() => ChooseColor())">
+            <i class="bi bi-palette"></i>
+        </Button>
+        <Button class="btn btn-outline-success" @onclick="@(() => RotateMore90())">
+            <i class="bi bi-arrow-clockwise"></i>
+        </Button>
 
-<div style="border: 5px solid #ccc; width: 500px; height: 500px; display: flex;
-justify-content: center;  align-items: center; @_imgBackGroundColor">
+    </div>
+}
+
+<div style="@(_isLoading ? "" : $"border: 5px solid #ccc; width: 500px; height: 500px; display: flex; justify-content: center;  align-items: center; {_imgBackGroundColor}") ">
     <img id="myImage" alt="" src="" style="max-width: 100%; max-height: 100%; @_imgTransform"/>
 </div>
 
-<button class="btn btn-outline-success" @onclick="DownloadFile">Download File</button>
-
+@if (!_isLoading)
+{
+    <button class="btn btn-outline-success" @onclick="DownloadFile">Download File</button>
+}
 
 @code {
+    private bool _isLoading = true;
+    private int _loadingValue = 0;
+    private CopyProgressInfo _progressInfo = new();
+
     private const long MaxFileSize = 10L * 1024L * 1024L;
     private Image? _imageSource;
     private string _fileName = string.Empty;
@@ -56,6 +71,8 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
 
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
+        _isLoading = true;
+
         var file = e.GetMultipleFiles(1).FirstOrDefault();
 
         if (file is not null)
@@ -83,7 +100,7 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
     private async Task ShowImage(IBrowserFile browserFile)
     {
         var strRef = new DotNetStreamReference(browserFile.OpenReadStream(MaxFileSize));
-
+        _isLoading = false;
         await Js.InvokeVoidAsync("setSource", "myImage", strRef);
     }
 
@@ -161,4 +178,16 @@ justify-content: center;  align-items: center; @_imgBackGroundColor">
         _imgBackGroundColor = _imgColorIsWhite ? "background-color: #000000;" : "background-color: #ffffff;";
         _imgColorIsWhite = !_imgColorIsWhite;
     }
+
+
+    public class CopyProgressInfo
+    {
+        public long BytesTransfered { get; set; }
+
+        public long TotalLengthinBytes { get; set; }
+
+        public double Percentage { get; set; }
+        public DateTime LastProgressUpdateVisualized = new();
+    }
+
 }
