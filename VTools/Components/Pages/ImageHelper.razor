@@ -1,4 +1,5 @@
 @page "/ImageHelper"
+@using System.Diagnostics
 @using SixLabors.ImageSharp
 @using SixLabors.ImageSharp.Formats.Webp
 @using SixLabors.ImageSharp.Processing
@@ -18,9 +19,7 @@
 
 @if (_isLoading)
 {
-    <div class="progress">
-        <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="@_loadingValue" aria-valuemin="0" aria-valuemax="100">25%</div>
-    </div>
+    <p>Loading ...</p>
 }
 else
 {
@@ -34,12 +33,11 @@ else
         <Button class="btn btn-outline-success" @onclick="@(() => RotateMore90())">
             <i class="bi bi-arrow-clockwise"></i>
         </Button>
-
     </div>
 }
 
-<div style="@(_isLoading ? "" : $"border: 5px solid #ccc; width: 500px; height: 500px; display: flex; justify-content: center;  align-items: center; {_imgBackGroundColor}") ">
-    <img id="myImage" alt="" src="" style="max-width: 100%; max-height: 100%; @_imgTransform"/>
+<div style="@(_isLoading ? "" : $"border: 2px solid #ccc; width: 500px; height: 500px; display: flex; justify-content: center; align-items: center; {_imgBackGroundColor}") ">
+    <img id="myImage" alt="" src="" style="max-width: 100%; max-height: 100%; @(_isLoading ? "display: none;" : "") @_imgTransform"/>
 </div>
 
 @if (!_isLoading)
@@ -49,12 +47,12 @@ else
 
 @code {
     private bool _isLoading = true;
-    private int _loadingValue = 0;
-    private CopyProgressInfo _progressInfo = new();
+    private bool _showDownloadFile;
 
     private const long MaxFileSize = 10L * 1024L * 1024L;
     private Image? _imageSource;
     private string _fileName = string.Empty;
+    private string _contentType = string.Empty;
 
     private readonly RotateService _imgRotation = new();
     private string _imgTransform = string.Empty;
@@ -62,16 +60,10 @@ else
     private bool _imgColorIsWhite = true;
     private string _imgBackGroundColor = string.Empty;
 
-    protected override Task OnInitializedAsync()
-    {
-        FileService.DeleteTempFiles(Environment.ContentRootPath);
-
-        return base.OnInitializedAsync();
-    }
-
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
         _isLoading = true;
+        _showDownloadFile = false;
 
         var file = e.GetMultipleFiles(1).FirstOrDefault();
 
@@ -79,16 +71,14 @@ else
         {
             try
             {
-                var path = FileService.GetTempFileName(Environment.ContentRootPath);
-
-                await using FileStream fs = new(path, FileMode.Create);
-                await file.OpenReadStream(MaxFileSize).CopyToAsync(fs);
-
                 _fileName = file.Name;
-
-                _imageSource = await StreamToImage(file);
+                _contentType = file.ContentType;
 
                 await ShowImage(file);
+
+                _imageSource = await StreamToImage(file);
+                _isLoading = false;
+                _showDownloadFile = true;
             }
             catch (Exception ex)
             {
@@ -97,28 +87,14 @@ else
         }
     }
 
+    private static async Task<Image> StreamToImage(IBrowserFile browserFile) =>
+        await Image.LoadAsync(browserFile.OpenReadStream(MaxFileSize));
+
     private async Task ShowImage(IBrowserFile browserFile)
     {
         var strRef = new DotNetStreamReference(browserFile.OpenReadStream(MaxFileSize));
-        _isLoading = false;
-        await Js.InvokeVoidAsync("setSource", "myImage", strRef);
+        await Js.InvokeVoidAsync("setSource", "myImage", strRef, _contentType, _fileName);
     }
-
-    private static async Task<MemoryStream> ImageToStream(Image image, int quality = 80)
-    {
-        var webPStream = new MemoryStream();
-
-        await image.SaveAsync(webPStream, new WebpEncoder
-        {
-            Quality = quality
-        });
-        webPStream.Position = 0;
-
-        return webPStream;
-    }
-
-    private static async Task<Image> StreamToImage(IBrowserFile browserFile) =>
-        await Image.LoadAsync(browserFile.OpenReadStream(MaxFileSize));
 
     private async Task DownloadFile()
     {
@@ -154,6 +130,19 @@ else
         }
     }
 
+    private static async Task<MemoryStream> ImageToStream(Image image, int quality = 80)
+    {
+        var webPStream = new MemoryStream();
+
+        await image.SaveAsync(webPStream, new WebpEncoder
+        {
+            Quality = quality
+        });
+        webPStream.Position = 0;
+
+        return webPStream;
+    }
+
     private void RotateMore90()
     {
         _imgRotation.RotateMore90();
@@ -178,16 +167,4 @@ else
         _imgBackGroundColor = _imgColorIsWhite ? "background-color: #000000;" : "background-color: #ffffff;";
         _imgColorIsWhite = !_imgColorIsWhite;
     }
-
-
-    public class CopyProgressInfo
-    {
-        public long BytesTransfered { get; set; }
-
-        public long TotalLengthinBytes { get; set; }
-
-        public double Percentage { get; set; }
-        public DateTime LastProgressUpdateVisualized = new();
-    }
-
 }
