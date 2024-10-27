@@ -27,7 +27,13 @@ public static class Test
         rotate270.Save($"{directory}/fb-rotate-270.png");
 
 
-        backgroundColor.Mutate(img => img.BackgroundColor(new Color(new Rgba32(12, 12, 221))));
+        backgroundColor.Mutate(img => img
+            .Resize(new ResizeOptions
+            {
+                Size = new Size(300, 300),
+                Mode = ResizeMode.Pad
+            })
+            .BackgroundColor(Color.Red));
         backgroundColor.Save($"{directory}/fb-BackgroundColor.png");
 
         var resize = Image.Load("fb.jpg");
@@ -37,7 +43,7 @@ public static class Test
                 Size = new Size(300, 300),
                 Mode = ResizeMode.Pad
             })
-            .BackgroundColor(new Rgba32(12, 12, 221))
+            .BackgroundColor(new Rgba32(255, 0, 0))
         );
         resize.Save($"{directory}/fb-resize.png");
 
@@ -51,7 +57,5 @@ public static class Test
             .BackgroundColor(new Rgba32(12, 12, 221))
         );
         resize2.Save($"{directory}/fb-resize2.png");
-
     }
-
 }

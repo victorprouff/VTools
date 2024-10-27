@@ -116,18 +116,10 @@ else
             {
                 Size = new Size(1080, 1080),
                 Mode = ResizeMode.Pad
-            }));
-
-        _imageSource?.Mutate(img => img.Rotate(_imgRotation.Value));
-
-        if (_imgColorIsWhite)
-        {
-            _imageSource?.Mutate(img => img.BackgroundColor(Color.White));
-        }
-        else
-        {
-            _imageSource?.Mutate(img => img.BackgroundColor(Color.Black));
-        }
+            })
+            .Rotate(_imgRotation.Value)
+            .BackgroundColor(_imgColorIsWhite ? Color.White : Color.Black)
+        );
     }
 
     private static async Task<MemoryStream> ImageToStream(Image image, int quality = 80)

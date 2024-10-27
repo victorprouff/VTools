@@ -6,10 +6,7 @@ using Color = SixLabors.ImageSharp.Color;
 using Size = SixLabors.ImageSharp.Size;
 
 
-StringBuilder builder = new();
-builder.AppendLine("Image Helper :");
-
-Console.WriteLine(builder.ToString());
+Console.WriteLine("\\<Image Helper>/");
 
 var arguments = ParseArguments(args);
 
@@ -19,17 +16,14 @@ if (arguments.Count == 0 || arguments.ContainsKey("--help") || !arguments.Contai
 }
 
 arguments.TryGetValue("--input", out var inputValue);
-arguments.TryGetValue("--rot", out var rotationValue);
-arguments.TryGetValue("--bg", out var backgroundColorValue);
 arguments.TryGetValue("--output", out var outputPathValue);
 
-if (outputPathValue is null)
-{
-    throw new ArgumentException("No output specified");
-}
-
+arguments.TryGetValue("--rot", out var rotationValue);
 var rotation = string.IsNullOrEmpty(rotationValue) ? 0 : int.Parse(rotationValue);
+
+arguments.TryGetValue("--bg", out var backgroundColorValue);
 var imgColorIsWhite = string.IsNullOrEmpty(backgroundColorValue) || backgroundColorValue == "white";
+
 
 var (image, fileName) = LoadImageFromStream(inputValue!);
 var stream = await ProcessImage(image, rotation, imgColorIsWhite);
@@ -57,18 +51,10 @@ static async Task<Stream> ProcessImage(Image image, int rotation, bool imgColorI
         {
             Size = new Size(1080, 1080),
             Mode = ResizeMode.Pad
-        }));
-
-    image.Mutate(img => img.Rotate(rotation));
-
-    if (imgColorIsWhite)
-    {
-        image.Mutate(img => img.BackgroundColor(Color.White));
-    }
-    else
-    {
-        image.Mutate(img => img.BackgroundColor(Color.Black));
-    }
+        })
+        .Rotate(rotation)
+        .BackgroundColor(imgColorIsWhite ? Color.White : Color.Black)
+    );
 
     var webPStream = new MemoryStream();
 
@@ -104,16 +90,20 @@ static Dictionary<string, string> ParseArguments(string[] args)
 
 static int PrintHelp()
 {
-    Console.WriteLine("Help:");
-    Console.WriteLine("------");
-    Console.WriteLine("Usage: ImageHelper [options]");
-    Console.WriteLine();
-    Console.WriteLine("Options:");
-    Console.WriteLine("  --help                             Display this help message");
-    Console.WriteLine("  --input=<file path>                Specify input image");
-    Console.WriteLine("  --output=<directory destination>   Specify output destination");
-    Console.WriteLine("  --rot=90                           Specify rotation in degre (Default rotation : 0)");
-    Console.WriteLine("  --bg=<white/black>                 Specify background color (Default color : white)");
+    StringBuilder builder = new();
+
+    builder.AppendLine("Help:");
+    builder.AppendLine("------");
+    builder.AppendLine("Usage: ImageHelper [options]");
+    builder.AppendLine();
+    builder.AppendLine("Options:");
+    builder.AppendLine("  --help                             Display this help message");
+    builder.AppendLine("  --input=<file path>                Specify input image");
+    builder.AppendLine("  --output=<directory destination>   Specify output destination");
+    builder.AppendLine("  --rot=90                           Specify rotation in degre (Default rotation : 0)");
+    builder.AppendLine("  --bg=<white/black>                 Specify background color (Default color : white)");
+
+    Console.WriteLine(builder.ToString());
 
     return 0;
 }
