@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbMigration", "DbMigration\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample", "Sample\Sample.csproj", "{70348459-99FB-4871-BC7E-03C84A0492E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageHelper", "ImageHelper\ImageHelper.csproj", "{C5EB55B2-8D6D-453D-841F-A630EA18BF80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{70348459-99FB-4871-BC7E-03C84A0492E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70348459-99FB-4871-BC7E-03C84A0492E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70348459-99FB-4871-BC7E-03C84A0492E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5EB55B2-8D6D-453D-841F-A630EA18BF80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5EB55B2-8D6D-453D-841F-A630EA18BF80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5EB55B2-8D6D-453D-841F-A630EA18BF80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5EB55B2-8D6D-453D-841F-A630EA18BF80}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
