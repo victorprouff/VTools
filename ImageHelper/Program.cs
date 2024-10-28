@@ -1,10 +1,5 @@
 ﻿using System.Text;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
-using Color = SixLabors.ImageSharp.Color;
-using Size = SixLabors.ImageSharp.Size;
-
+using ImageHelper.Services;
 
 Console.WriteLine("\\<Image Helper>/");
 
@@ -25,47 +20,14 @@ arguments.TryGetValue("--bg", out var backgroundColorValue);
 var imgColorIsWhite = string.IsNullOrEmpty(backgroundColorValue) || backgroundColorValue == "white";
 
 
-var (image, fileName) = LoadImageFromStream(inputValue!);
-var stream = await ProcessImage(image, rotation, imgColorIsWhite);
+var (image, fileName) = ImageService.LoadImageFromStream(inputValue!);
+var stream = await ImageService.ProcessImage(image, rotation, imgColorIsWhite);
 
 await using var fileStream = File.Create($"{outputPathValue}/resized-{fileName}");
 stream.CopyTo(fileStream);
 
 return 0;
 
-
-static Tuple<Image, string> LoadImageFromStream(string inputValue)
-{
-    var imageStream = new FileStream(inputValue, FileMode.Open, FileAccess.Read);
-
-    var split = imageStream.Name.Split('/');
-    var fileName = split[^1];
-
-    return new Tuple<Image, string>(Image.Load(imageStream), fileName);
-}
-
-static async Task<Stream> ProcessImage(Image image, int rotation, bool imgColorIsWhite)
-{
-    image.Mutate(x => x
-        .Resize(new ResizeOptions
-        {
-            Size = new Size(1080, 1080),
-            Mode = ResizeMode.Pad
-        })
-        .Rotate(rotation)
-        .BackgroundColor(imgColorIsWhite ? Color.White : Color.Black)
-    );
-
-    var webPStream = new MemoryStream();
-
-    await image.SaveAsync(webPStream, new WebpEncoder
-    {
-        Quality = 80
-    });
-    webPStream.Position = 0;
-
-    return webPStream;
-}
 
 static Dictionary<string, string> ParseArguments(string[] args)
 {
