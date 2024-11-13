@@ -21,13 +21,15 @@ var imgColorIsWhite = string.IsNullOrEmpty(backgroundColorValue) || backgroundCo
 
 
 var (image, fileName) = ImageService.LoadImageFromStream(inputValue!);
-var stream = await ImageService.ProcessImage(image, rotation, imgColorIsWhite);
+var processedImage = ImageService.ProcessImage(image, rotation, imgColorIsWhite);
 
-await using var fileStream = File.Create($"{outputPathValue}/resized-{fileName}");
-stream.CopyTo(fileStream);
+var colorChoosed = imgColorIsWhite ? "white" : "black";
+Console.WriteLine($"<Resize of {fileName}, with  rotation: {rotation}, img color: { colorChoosed }>");
+
+ImageService.SaveImageToFile(processedImage, outputPathValue!, fileName);
+Console.WriteLine($"Image processed successfully. Resized image saved as resized-{fileName}");
 
 return 0;
-
 
 static Dictionary<string, string> ParseArguments(string[] args)
 {

@@ -16,7 +16,7 @@ public static class ImageService
         return new Tuple<Image, string>(Image.Load(imageStream), fileName);
     }
 
-    public static async Task<Stream> ProcessImage(Image image, int rotation, bool imgColorIsWhite)
+    public static Image ProcessImage(Image image, int rotation, bool imgColorIsWhite)
     {
         image.Mutate(x => x
             .Resize(new ResizeOptions
@@ -28,10 +28,11 @@ public static class ImageService
             .BackgroundColor(imgColorIsWhite ? Color.White : Color.Black)
         );
 
-        var jpgStream = new MemoryStream();
-        await image.SaveAsync(jpgStream, new JpegEncoder { Quality = 80 });
-        jpgStream.Position = 0;
+        return image;
+    }
 
-        return jpgStream;
+    public static void SaveImageToFile(Image image, string outputPathValue, string fileName)
+    {
+        image.SaveAsJpeg($"{outputPathValue}/resized-{fileName}", new JpegEncoder { Quality = 80 });
     }
 }
