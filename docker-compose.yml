@@ -12,8 +12,8 @@ services:
     build:
       context: .
       dockerfile: DbMigration/Dockerfile
-    depends_on:
-      - db
+#    depends_on:
+#      - db
     environment:
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRING} #"User ID =user-vTools-dev;Password=password;Server=db;Port=5432;Database=vTools;Pooling=true;"
 
