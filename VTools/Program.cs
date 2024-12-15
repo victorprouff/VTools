@@ -13,6 +13,7 @@ using VTools.Data.Handlers;
 using VTools.Data.Repositories;
 using VTools.Data.Repositories.Interfaces;
 using VTools.LoanAggregate;
+using VTools.UserAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,12 +58,14 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddTransient<IClock, SystemClock>(_ => SystemClock.Instance);
 
+builder.Services.AddTransient<IUserRepository, UserRepository>(_ =>
+    new UserRepository(connectionString));
 builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
     new LoanRepository(connectionString));
-
 builder.Services.AddTransient<IBadDayPostRepository, BadDayPostRepository>(_ =>
     new BadDayPostRepository(connectionString));
 
+builder.Services.AddTransient<IUserDomain, UserDomain>();
 builder.Services.AddTransient<ILoanDomain, LoanDomain>();
 builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
 

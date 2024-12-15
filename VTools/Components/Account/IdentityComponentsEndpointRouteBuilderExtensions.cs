@@ -10,7 +10,7 @@ using VTools.Components.Account.Pages;
 using VTools.Components.Account.Pages.Manage;
 using VTools.Data;
 
-namespace Microsoft.AspNetCore.Routing;
+namespace VTools.Components.Account;
 
 internal static class IdentityComponentsEndpointRouteBuilderExtensions
 {
