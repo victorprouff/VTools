@@ -15,7 +15,7 @@ services:
 #    depends_on:
 #      - db
     environment:
-      ConnectionStrings__DefaultConnection: ${CONNECTION_STRING} #"User ID =user-vTools-dev;Password=password;Server=db;Port=5432;Database=vTools;Pooling=true;"
+      ConnectionStrings__DefaultConnection: "User ID =${DB_USER};Password=${DB_PASSWORD};Server=${CONNECTION_STRING};Port=5432;Database=postgres;Pooling=true;"
 
   VTools:
     image: vtools:latest
@@ -27,4 +27,4 @@ services:
 #    depends_on:
 #      - db
     environment:
-      ConnectionStrings__DefaultConnection: ${CONNECTION_STRING} #"User ID =user-vTools-dev;Password=password;Server=db;Port=5432;Database=vTools;Pooling=true;"
+      ConnectionStrings__DefaultConnection: "User ID =${DB_USER};Password=${DB_PASSWORD};Server=${CONNECTION_STRING};Port=5432;Database=postgres;Pooling=true;"
