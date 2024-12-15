@@ -1,4 +1,3 @@
-﻿
 services:
   db:
     image: postgres:alpine
@@ -27,7 +26,7 @@ services:
       dockerfile: VTools/Dockerfile
     platform: linux/arm64
     ports:
-      - 8080:8080
+      - 7850:8080
     depends_on:
       - db
     environment:
