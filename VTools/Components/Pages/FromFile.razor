@@ -22,39 +22,132 @@
 @*         </li> *@
 @*     } *@
 @* </ul> *@
-
-<table class="table">
-    <thead>
-    <tr>
-        <th>Type</th>
-        <th>Content</th>
-        <th>Description</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in _articles)
-    {
-        <tr>
-            <td>@item.Category</td>
-            <td>@item.Title</td>
-            <td>@item.Description</td>
-            <td>
+@if (_articles.Any(a => a.Category == Category.Youtube))
+{
+    <h3>🎞️ Youtube</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Youtube))
+        {
+            <li>
+                @item.Title : @item.Description
                 <ul>
                     @foreach (var url in item.Urls)
                     {
                         <li>@url</li>
                     }
                 </ul>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Articles))
+{
+    <h3>📖 Articles</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Articles))
+        {
+            <li>
+                @item.Title : @item.Description
+                <ul>
+                    @foreach (var url in item.Urls)
+                    {
+                        <li>@url</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Tools))
+{
+    <h3>🛠️ Tools</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Tools))
+        {
+            <li>
+                @item.Title : @item.Description
+                <ul>
+                    @foreach (var url in item.Urls)
+                    {
+                        <li>@url</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Podcast))
+{
+    <h3>🎧 Podcasts</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Podcast))
+        {
+            @* <a href="@item.Urls.FirstOrDefault()">@item.Description</a> *@
+
+            <li>
+                @item.Title : @item.Description
+                <ul>
+                    @foreach (var url in item.Urls)
+                    {
+                        <li>@url</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Livre))
+{
+    <h3>📚 Livres</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Livre))
+        {
+            <li>
+                @item.Title : @item.Description
+                <ul>
+                    @foreach (var url in item.Urls)
+                    {
+                        <li>@url</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+
+@* <table class="table"> *@
+@*     <thead> *@
+@*     <tr> *@
+@*         <th>Type</th> *@
+@*         <th>Content</th> *@
+@*         <th>Description</th> *@
+@*     </tr> *@
+@*     </thead> *@
+@*     <tbody> *@
+@*     @foreach (var item in _articles) *@
+@*     { *@
+@*         <tr> *@
+@*             <td>@item.Category</td> *@
+@*             <td>@item.Title</td> *@
+@*             <td>@item.Description</td> *@
+@*             <td> *@
+@*                 <ul> *@
+@*                     @foreach (var url in item.Urls) *@
+@*                     { *@
+@*                         <li>@url</li> *@
+@*                     } *@
+@*                 </ul> *@
+@*             </td> *@
+@*         </tr> *@
+@*     } *@
+@*     </tbody> *@
+@* </table> *@
 
 @code {
 
-    readonly List<Article> _articles = new();
-    // List<Item> _items = new();
+    readonly List<Article> _articles = [];
+    List<Item> _items = new();
 
     private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
@@ -83,7 +176,6 @@
             using var reader = new StreamReader(ms);
             using (var csv = new CsvReader(reader, config))
             {
-
                 csv.Read();
                 csv.ReadHeader();
 
@@ -95,7 +187,7 @@
                     var content = csv.GetField<string>("CONTENT");
                     var description = csv.GetField<string>("DESCRIPTION");
 
-                    // _items.Add(new Item(type, content, description));
+                    _items.Add(new Item(type, content, description));
 
                     if (type == "section")
                     {
@@ -106,7 +198,12 @@
                     if (type != "task" || category is Category.PutAside) continue;
 
                     var urls = description is null ? [] : ExtractMarkdownLinkSchemas(description);
-                    var record = Article.Create(content, description, urls, category);
+                    var descriptionWithoutLinks = description is null ? string.Empty : RemoveMarkdownLinkSchemas(description);
+                    var firstUrl = urls.FirstOrDefault();
+                    var title = IsContainMarkdownLinkSchemas(firstUrl) ? firstUrl : $"[{content}]({firstUrl})";
+
+                    var record = Article.Create(title, descriptionWithoutLinks, urls, category);
+
                     _articles.Add(record);
                 }
             }
@@ -119,18 +216,22 @@
         {
             return Category.Youtube;
         }
+
         if (content == Category.Articles.ToString())
         {
             return Category.Articles;
         }
+
         if (content == Category.Tools.ToString())
         {
             return Category.Tools;
         }
+
         if (content == Category.Podcast.ToString())
         {
             return Category.Podcast;
         }
+
         if (content == Category.Livre.ToString())
         {
             return Category.Livre;
@@ -139,14 +240,13 @@
         return Category.PutAside;
     }
 
-    private static string[] ExtractMarkdownLinkSchemas(string input)
+    private static string[] ExtractMarkdownLinkSchemas(string? input)
     {
         if (string.IsNullOrEmpty(input))
         {
             return [];
         }
 
-        // Regex pour détecter les liens Markdown [text](lien)
         var pattern = @"\[(.*?)\]\((.*?)\)";
         var matches = Regex.Matches(input, pattern);
 
@@ -154,23 +254,56 @@
         var fullSchemas = new List<string>();
         foreach (Match match in matches)
         {
-            fullSchemas.Add(match.Value); // Ajouter le schéma complet [text](lien) trouvé
+            fullSchemas.Add(match.Value);
         }
 
-        return fullSchemas.ToArray(); // Retourner le tableau des schémas complets
+        return fullSchemas.ToArray();
     }
 
-    // public class Item
-    // {
-    //     public string? Type { get; set; }
-    //     public string? Content { get; set; }
-    //     public string? Description { get; set; }
-    //     public Item(string? type, string? content, string? description)
-    //     {
-    //         Type = type;
-    //         Content = content;
-    //         Description = description;
-    //     }
-    // }
+    private static string RemoveMarkdownLinkSchemas(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        // Regex pour détecter les liens Markdown [text](lien)
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        var matches = Regex.Matches(input, pattern);
+
+        // Collecter tous les schémas complets trouvés
+        foreach (Match match in matches)
+        {
+            input = input.Replace(match.Value, "");
+        }
+
+        return input;
+    }
+
+    private static bool IsContainMarkdownLinkSchemas(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return false;
+        }
+
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        return Regex.IsMatch(input, pattern);
+    }
+
+
+    public class Item
+    {
+        public string? Type { get; set; }
+        public string? Content { get; set; }
+        public string? Description { get; set; }
+
+        public Item(string? type, string? content, string? description)
+        {
+            Type = type;
+            Content = content;
+            Description = description;
+        }
+    }
 
 }
