@@ -29,11 +29,13 @@
         @foreach (var item in _articles.Where(a => a.Category == Category.Youtube))
         {
             <li>
-                @item.Title : @item.Description
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
                 <ul>
-                    @foreach (var url in item.Urls)
+                    @foreach (var url in item.Urls.Skip(1))
                     {
-                        <li>@url</li>
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
                     }
                 </ul>
             </li>
@@ -47,11 +49,13 @@
         @foreach (var item in _articles.Where(a => a.Category == Category.Articles))
         {
             <li>
-                @item.Title : @item.Description
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
                 <ul>
-                    @foreach (var url in item.Urls)
+                    @foreach (var url in item.Urls.Skip(1))
                     {
-                        <li>@url</li>
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
                     }
                 </ul>
             </li>
@@ -65,11 +69,13 @@
         @foreach (var item in _articles.Where(a => a.Category == Category.Tools))
         {
             <li>
-                @item.Title : @item.Description
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
                 <ul>
-                    @foreach (var url in item.Urls)
+                    @foreach (var url in item.Urls.Skip(1))
                     {
-                        <li>@url</li>
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
                     }
                 </ul>
             </li>
@@ -82,14 +88,14 @@
     <ul>
         @foreach (var item in _articles.Where(a => a.Category == Category.Podcast))
         {
-            @* <a href="@item.Urls.FirstOrDefault()">@item.Description</a> *@
-
             <li>
-                @item.Title : @item.Description
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
                 <ul>
-                    @foreach (var url in item.Urls)
+                    @foreach (var url in item.Urls.Skip(1))
                     {
-                        <li>@url</li>
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
                     }
                 </ul>
             </li>
@@ -103,18 +109,19 @@
         @foreach (var item in _articles.Where(a => a.Category == Category.Livre))
         {
             <li>
-                @item.Title : @item.Description
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
                 <ul>
-                    @foreach (var url in item.Urls)
+                    @foreach (var url in item.Urls.Skip(1))
                     {
-                        <li>@url</li>
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
                     }
                 </ul>
             </li>
         }
     </ul>
 }
-
 
 @* <table class="table"> *@
 @*     <thead> *@
@@ -199,10 +206,8 @@
 
                     var urls = description is null ? [] : ExtractMarkdownLinkSchemas(description);
                     var descriptionWithoutLinks = description is null ? string.Empty : RemoveMarkdownLinkSchemas(description);
-                    var firstUrl = urls.FirstOrDefault();
-                    var title = IsContainMarkdownLinkSchemas(firstUrl) ? firstUrl : $"[{content}]({firstUrl})";
 
-                    var record = Article.Create(title, descriptionWithoutLinks, urls, category);
+                    var record = Article.Create(content, descriptionWithoutLinks, urls, category);
 
                     _articles.Add(record);
                 }
@@ -240,7 +245,7 @@
         return Category.PutAside;
     }
 
-    private static string[] ExtractMarkdownLinkSchemas(string? input)
+    private static Link[] ExtractMarkdownLinkSchemas(string? input)
     {
         if (string.IsNullOrEmpty(input))
         {
@@ -251,13 +256,17 @@
         var matches = Regex.Matches(input, pattern);
 
         // Collecter tous les schémas complets trouvés
-        var fullSchemas = new List<string>();
+        var links = new List<Link>();
+
         foreach (Match match in matches)
         {
-            fullSchemas.Add(match.Value);
+            if (match.Groups.Count > 2) // S'assurer que le lien est trouvé
+            {
+                links.Add(new Link(match.Groups[2].Value, match.Groups[1].Value)); // Ajouter uniquement la partie "(lien)"
+            }
         }
 
-        return fullSchemas.ToArray();
+        return links.ToArray();
     }
 
     private static string RemoveMarkdownLinkSchemas(string? input)
