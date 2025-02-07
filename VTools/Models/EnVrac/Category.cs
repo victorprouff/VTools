@@ -3,8 +3,9 @@ namespace VTools.Models.EnVrac;
 public enum Category
 {
     Youtube,
-    Article,
+    Articles,
     Tools,
     Podcast,
-    Livre
+    Livre,
+    PutAside
 }
