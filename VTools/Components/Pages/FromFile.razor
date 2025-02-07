@@ -1,0 +1,148 @@
+@page "/csvfile"
+@using System.Globalization
+@using System.Runtime.CompilerServices
+@using System.Text
+@using System.Text.RegularExpressions
+@using CsvHelper
+@using CsvHelper.Configuration
+@using CsvHelper.Configuration.Attributes
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<h3>Download CSV Example</h3>
+
+<InputFile OnChange="@OnInputFileChange" class="btn btn-primary"/>
+
+<ul>
+    @foreach (var item in @_items)
+    {
+        <li>
+            Type - @item.Type,
+            Content - @item.Content,
+            Description - @item.Description
+        </li>
+    }
+</ul>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th>Content</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in _items)
+    {
+        <tr>
+            <td>@item.Type</td>
+            <td>@item.Content</td>
+            <td>@item.Description</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+
+    // TODO :
+    // - Gérer les cas ou la description contient plusieurs lignes avec possiblement CsvHelper (pour prendre en compte les "". Peut-être une meilleure gestion des CSV
+    // - Regrouper les
+    List<Item> _items = new();
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var singleFile = e.File;
+
+        var regex = new Regex(".+\\.csv", RegexOptions.Compiled);
+        if (!regex.IsMatch(singleFile.Name))
+        {
+            //show error invalidad format file
+        }
+        else
+        {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                NewLine = Environment.NewLine,
+                IgnoreBlankLines = true,
+                Delimiter = ",",
+                HasHeaderRecord = true
+            };
+
+            var stream = singleFile.OpenReadStream();
+            var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            using (var reader = new StreamReader(ms))
+            using (var csv = new CsvReader(reader, config))
+            {
+                // csv.Read();
+                // while (csv.Read())
+                // {
+                //     var record = csv.GetRecord<Item>();
+                //     // Do something with the record.
+                //     _items.Add(record);
+                // }
+
+                var test = csv.GetRecords<Item>();
+                _items = test.ToList();
+            }
+
+
+            // var stream = singleFile.OpenReadStream();
+            // _items = new List<Item>();
+            // var ms = new MemoryStream();
+            // await stream.CopyToAsync(ms);
+            // stream.Close();
+            // var outputFileString = Encoding.UTF8.GetString(ms.ToArray());
+            //
+            // var typeSection = string.Empty;
+            // foreach (var item in outputFileString.Split(Environment.NewLine))
+            // {
+            //     var column = item.Split(",").ToList();
+            //
+            //     if (CheckIfColumnIs(column, "type"))
+            //     {
+            //         continue;
+            //     }
+            //
+            //     if (CheckIfColumnIs(column, "section"))
+            //     {
+            //         typeSection = column[1];
+            //         continue;
+            //     }
+            //
+            //     if (CheckIfColumnIs(column, "task"))
+            //     {
+            //         _items.Add(new Item(typeSection, column[1], column[2]));
+            //     }
+            // }
+        }
+    }
+
+    // private static bool CheckIfColumnIs(List<string> column, string typeLine)
+    // {
+    //     return string.Equals(column[0], typeLine, StringComparison.InvariantCultureIgnoreCase);
+    // }
+
+    public class Item
+    {
+        [Name("TYPE")]
+        public string Type { get; set; }
+        [Name("CONTENT")]
+        public string Content { get; set; }
+        [Name("DESCRIPTION")]
+        public string Description { get; set; }
+
+        public Item(string type, string content, string description)
+        {
+            Type = type;
+            Content = content;
+            Description = description;
+        }
+    }
+
+}
