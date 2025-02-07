@@ -1,0 +1,318 @@
+@page "/csvfile"
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using CsvHelper
+@using CsvHelper.Configuration
+@using VTools.Models.EnVrac
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<h3>Download CSV Example</h3>
+
+<InputFile OnChange="@OnInputFileChange" class="btn btn-primary"/>
+
+@* <ul> *@
+@*     @foreach (var item in @_items) *@
+@*     { *@
+@*         <li> *@
+@*             Type - @item.Type, *@
+@*             Content - @item.Content, *@
+@*             Description - @item.Description *@
+@*         </li> *@
+@*     } *@
+@* </ul> *@
+@if (_articles.Any(a => a.Category == Category.Youtube))
+{
+    <h3>🎞️ Youtube</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Youtube))
+        {
+            <li>
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
+                <ul>
+                    @foreach (var url in item.Urls.Skip(1))
+                    {
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Articles))
+{
+    <h3>📖 Articles</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Articles))
+        {
+            <li>
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
+                <ul>
+                    @foreach (var url in item.Urls.Skip(1))
+                    {
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Tools))
+{
+    <h3>🛠️ Tools</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Tools))
+        {
+            <li>
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
+                <ul>
+                    @foreach (var url in item.Urls.Skip(1))
+                    {
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Podcast))
+{
+    <h3>🎧 Podcasts</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Podcast))
+        {
+            <li>
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
+                <ul>
+                    @foreach (var url in item.Urls.Skip(1))
+                    {
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@if (_articles.Any(a => a.Category == Category.Livre))
+{
+    <h3>📚 Livres</h3>
+    <ul>
+        @foreach (var item in _articles.Where(a => a.Category == Category.Livre))
+        {
+            <li>
+                <a href="@item.Urls.FirstOrDefault()">@item.Title</a> : @item.Description
+                @* @item.Title : @item.Description *@
+                <ul>
+                    @foreach (var url in item.Urls.Skip(1))
+                    {
+                        <li><a href="@url.Url">@url.Title</a></li>
+                        @* <li>@url</li> *@
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+@* <table class="table"> *@
+@*     <thead> *@
+@*     <tr> *@
+@*         <th>Type</th> *@
+@*         <th>Content</th> *@
+@*         <th>Description</th> *@
+@*     </tr> *@
+@*     </thead> *@
+@*     <tbody> *@
+@*     @foreach (var item in _articles) *@
+@*     { *@
+@*         <tr> *@
+@*             <td>@item.Category</td> *@
+@*             <td>@item.Title</td> *@
+@*             <td>@item.Description</td> *@
+@*             <td> *@
+@*                 <ul> *@
+@*                     @foreach (var url in item.Urls) *@
+@*                     { *@
+@*                         <li>@url</li> *@
+@*                     } *@
+@*                 </ul> *@
+@*             </td> *@
+@*         </tr> *@
+@*     } *@
+@*     </tbody> *@
+@* </table> *@
+
+@code {
+
+    readonly List<Article> _articles = [];
+    List<Item> _items = new();
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var singleFile = e.File;
+
+        var regex = new Regex(".+\\.csv", RegexOptions.Compiled);
+        if (!regex.IsMatch(singleFile.Name))
+        {
+            //show error invalidad format file
+        }
+        else
+        {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                NewLine = Environment.NewLine,
+                IgnoreBlankLines = true,
+                Delimiter = ",",
+                HasHeaderRecord = true
+            };
+
+            var stream = singleFile.OpenReadStream();
+            var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            using var reader = new StreamReader(ms);
+            using (var csv = new CsvReader(reader, config))
+            {
+                csv.Read();
+                csv.ReadHeader();
+
+                var category = Category.Articles;
+
+                while (csv.Read())
+                {
+                    var type = csv.GetField<string>("TYPE");
+                    var content = csv.GetField<string>("CONTENT");
+                    var description = csv.GetField<string>("DESCRIPTION");
+
+                    _items.Add(new Item(type, content, description));
+
+                    if (type == "section")
+                    {
+                        category = GetCategory(content);
+                        continue;
+                    }
+
+                    if (type != "task" || category is Category.PutAside) continue;
+
+                    var urls = description is null ? [] : ExtractMarkdownLinkSchemas(description);
+                    var descriptionWithoutLinks = description is null ? string.Empty : RemoveMarkdownLinkSchemas(description);
+
+                    var record = Article.Create(content, descriptionWithoutLinks, urls, category);
+
+                    _articles.Add(record);
+                }
+            }
+        }
+    }
+
+    private static Category GetCategory(string? content)
+    {
+        if (content == Category.Youtube.ToString())
+        {
+            return Category.Youtube;
+        }
+
+        if (content == Category.Articles.ToString())
+        {
+            return Category.Articles;
+        }
+
+        if (content == Category.Tools.ToString())
+        {
+            return Category.Tools;
+        }
+
+        if (content == Category.Podcast.ToString())
+        {
+            return Category.Podcast;
+        }
+
+        if (content == Category.Livre.ToString())
+        {
+            return Category.Livre;
+        }
+
+        return Category.PutAside;
+    }
+
+    private static Link[] ExtractMarkdownLinkSchemas(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return [];
+        }
+
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        var matches = Regex.Matches(input, pattern);
+
+        // Collecter tous les schémas complets trouvés
+        var links = new List<Link>();
+
+        foreach (Match match in matches)
+        {
+            if (match.Groups.Count > 2) // S'assurer que le lien est trouvé
+            {
+                links.Add(new Link(match.Groups[2].Value, match.Groups[1].Value)); // Ajouter uniquement la partie "(lien)"
+            }
+        }
+
+        return links.ToArray();
+    }
+
+    private static string RemoveMarkdownLinkSchemas(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        // Regex pour détecter les liens Markdown [text](lien)
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        var matches = Regex.Matches(input, pattern);
+
+        // Collecter tous les schémas complets trouvés
+        foreach (Match match in matches)
+        {
+            input = input.Replace(match.Value, "");
+        }
+
+        return input;
+    }
+
+    private static bool IsContainMarkdownLinkSchemas(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return false;
+        }
+
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        return Regex.IsMatch(input, pattern);
+    }
+
+
+    public class Item
+    {
+        public string? Type { get; set; }
+        public string? Content { get; set; }
+        public string? Description { get; set; }
+
+        public Item(string? type, string? content, string? description)
+        {
+            Type = type;
+            Content = content;
+            Description = description;
+        }
+    }
+
+}
