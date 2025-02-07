@@ -23,74 +23,74 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IdentityUserAccessor>();
-builder.Services.AddScoped<IdentityRedirectManager>();
-builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+// builder.Services.AddCascadingAuthenticationState();
+// builder.Services.AddScoped<IdentityUserAccessor>();
+// builder.Services.AddScoped<IdentityRedirectManager>();
+// builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+// builder.Services.AddAuthentication(options =>
+//     {
+//         options.DefaultScheme = IdentityConstants.ApplicationScheme;
+//         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+//     })
+//     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                       throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+//                        throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+//
+// builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//     options.UseNpgsql(connectionString));
+// builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+//
+// DefaultTypeMap.MatchNamesWithUnderscores = true;
+// SqlMapper.AddTypeHandler(new InstantHandler());
+//
+// builder.Services.AddNpgsqlDataSource(
+//     connectionString,
+//     builder => builder.UseNodaTime());
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-DefaultTypeMap.MatchNamesWithUnderscores = true;
-SqlMapper.AddTypeHandler(new InstantHandler());
-
-builder.Services.AddNpgsqlDataSource(
-    connectionString,
-    builder => builder.UseNodaTime());
-
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+// builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+//     .AddEntityFrameworkStores<ApplicationDbContext>()
+//     .AddSignInManager()
+//     .AddDefaultTokenProviders();
 
 builder.Services.AddHttpClient();
 
 builder.Services.AddTransient<IClock, SystemClock>(_ => SystemClock.Instance);
 
-builder.Services.AddTransient<IUserRepository, UserRepository>(_ =>
-    new UserRepository(connectionString));
-builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
-    new LoanRepository(connectionString));
-builder.Services.AddTransient<IBadDayPostRepository, BadDayPostRepository>(_ =>
-    new BadDayPostRepository(connectionString));
+// builder.Services.AddTransient<IUserRepository, UserRepository>(_ =>
+//     new UserRepository(connectionString));
+// builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
+//     new LoanRepository(connectionString));
+// builder.Services.AddTransient<IBadDayPostRepository, BadDayPostRepository>(_ =>
+//     new BadDayPostRepository(connectionString));
 
-builder.Services.AddTransient<IUserDomain, UserDomain>();
-builder.Services.AddTransient<ILoanDomain, LoanDomain>();
-builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
+// builder.Services.AddTransient<IUserDomain, UserDomain>();
+// builder.Services.AddTransient<ILoanDomain, LoanDomain>();
+// builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-
-builder.Services.AddAuthorizationCore(options =>
-    options.AddPolicy("EditUser", policy =>
-        policy.RequireAssertion(context =>
-        {
-            if (context.Resource is RouteData rd)
-            {
-                rd.Values.TryGetValue("id", out var value);
-                // var routeValue = rd.RouteValues.TryGetValue("id", out var value);
-
-                var id = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
-
-                if (!string.IsNullOrEmpty(id))
-                {
-                    return id.StartsWith("EMP", StringComparison.InvariantCulture);
-                }
-            }
-
-            return false;
-        }))
-    );
+// builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+//
+// builder.Services.AddAuthorizationCore(options =>
+//     options.AddPolicy("EditUser", policy =>
+//         policy.RequireAssertion(context =>
+//         {
+//             if (context.Resource is RouteData rd)
+//             {
+//                 rd.Values.TryGetValue("id", out var value);
+//                 // var routeValue = rd.RouteValues.TryGetValue("id", out var value);
+//
+//                 var id = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+//
+//                 if (!string.IsNullOrEmpty(id))
+//                 {
+//                     return id.StartsWith("EMP", StringComparison.InvariantCulture);
+//                 }
+//             }
+//
+//             return false;
+//         }))
+//     );
 
 
 var app = builder.Build();
@@ -121,6 +121,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
-app.MapAdditionalIdentityEndpoints();
+// app.MapAdditionalIdentityEndpoints();
 
 app.Run();
