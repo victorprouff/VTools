@@ -12,16 +12,16 @@
 
 <InputFile OnChange="@OnInputFileChange" class="btn btn-primary"/>
 
-<ul>
-    @foreach (var item in @_items)
-    {
-        <li>
-            Type - @item.Type,
-            Content - @item.Content,
-            Description - @item.Description
-        </li>
-    }
-</ul>
+@* <ul> *@
+@*     @foreach (var item in @_items) *@
+@*     { *@
+@*         <li> *@
+@*             Type - @item.Type, *@
+@*             Content - @item.Content, *@
+@*             Description - @item.Description *@
+@*         </li> *@
+@*     } *@
+@* </ul> *@
 
 <table class="table">
     <thead>
@@ -38,6 +38,14 @@
             <td>@item.Category</td>
             <td>@item.Title</td>
             <td>@item.Description</td>
+            <td>
+                <ul>
+                    @foreach (var url in item.Urls)
+                    {
+                        <li>@url</li>
+                    }
+                </ul>
+            </td>
         </tr>
     }
     </tbody>
@@ -45,11 +53,8 @@
 
 @code {
 
-    // TODO :
-    // - Gérer les cas ou la description contient plusieurs lignes avec possiblement CsvHelper (pour prendre en compte les "". Peut-être une meilleure gestion des CSV
-    // - Regrouper les
-    List<Article> _articles = new();
-    List<Item> _items = new();
+    readonly List<Article> _articles = new();
+    // List<Item> _items = new();
 
     private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
@@ -90,7 +95,7 @@
                     var content = csv.GetField<string>("CONTENT");
                     var description = csv.GetField<string>("DESCRIPTION");
 
-                    _items.Add(new Item(type, content, description));
+                    // _items.Add(new Item(type, content, description));
 
                     if (type == "section")
                     {
@@ -98,12 +103,11 @@
                         continue;
                     }
 
-                    if (type == "task" && category is not Category.PutAside)
-                    {
-                        var record = Article.Create(content, description, new List<string>(), category);
+                    if (type != "task" || category is Category.PutAside) continue;
 
-                        _articles.Add(record);
-                    }
+                    var urls = description is null ? [] : ExtractMarkdownLinkSchemas(description);
+                    var record = Article.Create(content, description, urls, category);
+                    _articles.Add(record);
                 }
             }
         }
@@ -135,17 +139,38 @@
         return Category.PutAside;
     }
 
-    public class Item
+    private static string[] ExtractMarkdownLinkSchemas(string input)
     {
-        public string? Type { get; set; }
-        public string? Content { get; set; }
-        public string? Description { get; set; }
-        public Item(string? type, string? content, string? description)
+        if (string.IsNullOrEmpty(input))
         {
-            Type = type;
-            Content = content;
-            Description = description;
+            return [];
         }
+
+        // Regex pour détecter les liens Markdown [text](lien)
+        var pattern = @"\[(.*?)\]\((.*?)\)";
+        var matches = Regex.Matches(input, pattern);
+
+        // Collecter tous les schémas complets trouvés
+        var fullSchemas = new List<string>();
+        foreach (Match match in matches)
+        {
+            fullSchemas.Add(match.Value); // Ajouter le schéma complet [text](lien) trouvé
+        }
+
+        return fullSchemas.ToArray(); // Retourner le tableau des schémas complets
     }
+
+    // public class Item
+    // {
+    //     public string? Type { get; set; }
+    //     public string? Content { get; set; }
+    //     public string? Description { get; set; }
+    //     public Item(string? type, string? content, string? description)
+    //     {
+    //         Type = type;
+    //         Content = content;
+    //         Description = description;
+    //     }
+    // }
 
 }
