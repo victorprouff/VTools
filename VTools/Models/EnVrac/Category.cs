@@ -22,4 +22,16 @@ public static class CategoryExtensions
             nameof(Category.Livre) => Category.Livre,
             _ => Category.PutAside
         };
+
+    public static string ToCategoryString(this Category category) =>
+        category.ToString() switch
+        {
+            nameof(Category.Youtube) => "🎞️ Youtube",
+            nameof(Category.Articles) => "📖 Articles",
+            nameof(Category.Tools) => "🛠️ Tools",
+            nameof(Category.Podcast) => "🎧 Podcasts",
+            nameof(Category.Livre) => "📚 Livres",
+            _ => "Autre"
+        };
+
 }

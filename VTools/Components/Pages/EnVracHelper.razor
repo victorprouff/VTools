@@ -1,0 +1,128 @@
+@page "/EnVracHelper"
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using CsvHelper
+@using CsvHelper.Configuration
+@using VTools.Models.EnVrac
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<h3>Download CSV Example</h3>
+
+<InputFile OnChange="@OnInputFileChange" class="btn btn-primary"/>
+<button type="button" class="btn btn-outline-primary" @onclick="@(() => Clear())">Clear</button>
+
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" id="flexCheckDefault" checked="@IsForLinkedin"
+           @oninput="@(() => IsForLinkedin = !IsForLinkedin)">
+    <label class="form-check-label" for="flexCheckDefault">
+        Is For Linkedin
+    </label>
+</div>
+
+@foreach (var categories in _articles.GroupBy(a => a.Category).ToList().Where(categories => categories.Any(a => a.Category == categories.Key)))
+{
+    if (IsForLinkedin)
+    {
+        <h3>@categories.Key.ToCategoryString()</h3>
+        foreach (var item in categories)
+        {
+            <p>- @item.Title : @item.Description</p>
+        }
+    }
+    else
+    {
+        <h3>### @categories.Key.ToCategoryString()</h3>
+        foreach (var item in categories)
+        {
+            <p>- @item.Urls.FirstOrDefault()?.ToMarkdown(item.Title): @item.Description</p>
+            <ul>
+                @foreach (var url in item.Urls.Skip(1))
+                {
+                    <li>- @url.ToMarkdown()</li>
+                }
+            </ul>
+        }
+    }
+}
+
+@code {
+
+    List<Article> _articles = [];
+
+    private const string MarkdownLinkPattern = @"\[(.*?)\]\((.*?)\)";
+    private const string UrlPattern = @"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)";
+    private bool IsForLinkedin { get; set; }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var singleFile = e.File;
+
+        var regex = new Regex(".+\\.csv", RegexOptions.Compiled);
+        if (!regex.IsMatch(singleFile.Name))
+        {
+            //show error invalidad format file
+        }
+        else
+        {
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                NewLine = Environment.NewLine,
+                IgnoreBlankLines = true,
+                Delimiter = ",",
+                HasHeaderRecord = true
+            };
+
+            var stream = singleFile.OpenReadStream();
+            var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            using var reader = new StreamReader(ms);
+            using var csv = new CsvReader(reader, config);
+
+            csv.Read();
+            csv.ReadHeader();
+
+            var category = Category.Articles;
+
+            while (csv.Read())
+            {
+                var type = csv.GetField<string>("TYPE");
+                var content = csv.GetField<string>("CONTENT");
+                var description = csv.GetField<string>("DESCRIPTION");
+
+                if (type == "section")
+                {
+                    category = content.ConvertToCategory();
+                    continue;
+                }
+
+                if (type != "task" || category is Category.PutAside) continue;
+
+                ConvertToArticle(description, content, category);
+            }
+        }
+    }
+
+    private void Clear()
+    {
+        _articles = [];
+    }
+
+    private void ConvertToArticle(string? description, string? content, Category category)
+    {
+        var urls = CleanLinkExtensions.ExtractRegexPattern(description, MarkdownLinkPattern);
+        var descriptionWithoutLinks = CleanLinkExtensions.RemoveRegexPattern(description, MarkdownLinkPattern);
+
+        var otherUrls = CleanLinkExtensions.ExtractRegexPattern(description, UrlPattern);
+        var descriptionWithoutUrls = CleanLinkExtensions.RemoveRegexPattern(descriptionWithoutLinks, UrlPattern);
+
+        var record = Article.Create(content, RemoveDashInString(descriptionWithoutUrls), CleanLinkExtensions.RemoveDoublon(urls.Concat(otherUrls)), category);
+
+        _articles.Add(record);
+    }
+
+    private string RemoveDashInString(string input) => input.Length == 1 ? string.Empty : input.Replace("- ", "");
+}
