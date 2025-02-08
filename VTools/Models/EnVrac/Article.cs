@@ -19,8 +19,3 @@ public class Article
         new(title, description, urls, category);
 
 }
-
-public record Link(string Url, string Title = "Source")
-{
-    public string ToMarkdown() => $"[{Title}]({Url})";
-}
