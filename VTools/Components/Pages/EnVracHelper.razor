@@ -1,4 +1,5 @@
 @page "/EnVracHelper"
+
 @using System.Globalization
 @using System.Text.RegularExpressions
 @using CsvHelper
@@ -8,17 +9,16 @@
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
-<h3>Download CSV Example</h3>
+<h3 class="text-center mb-4">Download CSV Example</h3>
 
-<InputFile OnChange="@OnInputFileChange" class="btn btn-primary"/>
-<button type="button" class="btn btn-outline-primary" @onclick="@(() => Clear())">Clear</button>
-
-<div class="form-check">
-    <input class="form-check-input" type="checkbox" id="flexCheckDefault" checked="@IsForLinkedin"
-           @oninput="@(() => IsForLinkedin = !IsForLinkedin)">
-    <label class="form-check-label" for="flexCheckDefault">
-        Is For Linkedin
-    </label>
+<div class="text-center input-group mb-4">
+    <InputFile OnChange="@OnInputFileChange" class="btn btn-primary" type="button"/>
+    <button type="button" class="btn btn-outline-warning" @onclick="@(() => Clear())">Clear</button>
+    <span class="input-group-text"> - </span>
+    <div class="input-group-text">
+        <input class="form-check-input mt-0" type="checkbox" value="" id="flexCheckDefault" aria-label="Radio button for following text input" checked="@IsForLinkedin" @oninput="@(() => IsForLinkedin = !IsForLinkedin)">
+        <label class="form-check-label" for="flexCheckDefault">&nbsp;&nbsp;Is For Linkedin</label>
+    </div>
 </div>
 
 @foreach (var categories in _articles.GroupBy(a => a.Category).ToList().Where(categories => categories.Any(a => a.Category == categories.Key)))
@@ -26,9 +26,9 @@
     if (IsForLinkedin)
     {
         <h3>@categories.Key.ToCategoryString()</h3>
-        foreach (var item in categories)
+        @foreach (var item in categories)
         {
-            <p>- @item.Title : @item.Description</p>
+            <span>- @item.Title @(string.IsNullOrEmpty(item.Description) ? "" : $" : {item.Description}")</span><br/>
         }
     }
     else
@@ -36,13 +36,11 @@
         <h3>### @categories.Key.ToCategoryString()</h3>
         foreach (var item in categories)
         {
-            <p>- @item.Urls.FirstOrDefault()?.ToMarkdown(item.Title): @item.Description</p>
-            <ul>
-                @foreach (var url in item.Urls.Skip(1))
-                {
-                    <li>- @url.ToMarkdown()</li>
-                }
-            </ul>
+            <span>- @item.Urls.FirstOrDefault()?.ToMarkdown(item.Title) @(string.IsNullOrEmpty(item.Description) ? "" : $" : {item.Description}")</span><br/>
+            @foreach (var url in item.Urls.Skip(1))
+            {
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;- @url.ToMarkdown()</span><br/>
+            }
         }
     }
 }
@@ -119,10 +117,10 @@
         var otherUrls = CleanLinkExtensions.ExtractRegexPattern(description, UrlPattern);
         var descriptionWithoutUrls = CleanLinkExtensions.RemoveRegexPattern(descriptionWithoutLinks, UrlPattern);
 
-        var record = Article.Create(content, RemoveDashInString(descriptionWithoutUrls), CleanLinkExtensions.RemoveDoublon(urls.Concat(otherUrls)), category);
+        var record = Article.Create(content, CleanText(descriptionWithoutUrls), CleanLinkExtensions.RemoveDoublon(urls.Concat(otherUrls)), category);
 
         _articles.Add(record);
     }
 
-    private string RemoveDashInString(string input) => input.Length == 1 ? string.Empty : input.Replace("- ", "");
+    private string CleanText(string input) => input.Length == 1 ? string.Empty : input.Replace("\n", "").Replace("- ", "").Replace("-", "");
 }
