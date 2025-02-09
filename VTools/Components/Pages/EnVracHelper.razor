@@ -23,7 +23,7 @@
     </div>
 </div>
 
-@if (IsForLinkedin)
+@if (IsForLinkedin && _articles.Any())
 {
     <p>Toutes les semaines, je vous partage des ressources pour améliorer votre culture numérique 👇</p>
     <p>Bonjour !</p>
@@ -31,7 +31,7 @@
         de ma veille quotidienne et que j'aimerais partager avec vous. 😀</p>
     <p>Vous pourrez retrouver sur mon article de blog :</p>
 }
-else
+else if(_articles.Any())
 {
     <p>Hello ! 😊</p>
     <p>Comme chaque semaine pouvez retrouver ici des liens d’articles de vidéos ou de podcast que j’ai découvert au fil
