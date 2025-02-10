@@ -12,7 +12,10 @@ using VTools.Data;
 using VTools.Data.Handlers;
 using VTools.Data.Repositories;
 using VTools.Data.Repositories.Interfaces;
+using VTools.Extension;
 using VTools.LoanAggregate;
+using VTools.Services;
+using VTools.Services.Interfaces;
 using VTools.UserAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,7 +23,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddBlazorBootstrap();
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
+builder.Services
+    .ConfigureServices(builder.Configuration)
+    .AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // builder.Services.AddCascadingAuthenticationState();
@@ -55,8 +60,6 @@ builder.Services.AddRazorComponents()
 //     .AddDefaultTokenProviders();
 
 builder.Services.AddHttpClient();
-
-builder.Services.AddTransient<IClock, SystemClock>(_ => SystemClock.Instance);
 
 // builder.Services.AddTransient<IUserRepository, UserRepository>(_ =>
 //     new UserRepository(connectionString));

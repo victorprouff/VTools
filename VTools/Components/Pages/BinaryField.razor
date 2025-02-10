@@ -1,0 +1,159 @@
+@page "/BinaryField"
+@using VTools.Services
+@using VTools.Services.Interfaces
+
+@rendermode InteractiveServer
+
+@inject IProductService ProductService;
+
+<h3>Champ binaire</h3>
+
+<table class="table">
+    <tr>
+        <td>Valeur Décimal :</td>
+        <td>
+            <input type="number" value="@DecimalNumber" maxlength="@_maximumDecimalValue" @onchange="DecimalToBinary"/>
+        </td>
+    </tr>
+    <tr>
+        <td>Valeur Binaire :</td>
+        <td>
+            <input type="number" value="@BinaryNumber" pattern="^([0-1])*$" maxlength="@_maximumBinaryValue" @onchange="BinaryToDecimal"/>
+        </td>
+    </tr>
+</table>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            @foreach (var product in _products)
+            {
+                <th>@product</th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            @foreach (var product in BinaryTable)
+            {
+                <td>
+                    <input type="checkbox" style="width: 40px; text-align: center;" checked="@product.Value" @onchange="e => UpdateBinaryChar(e, product)"/>
+                </td>
+            }
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private long _maximumBinaryValue;
+    private int _maximumDecimalValue;
+    private string[] _products = [];
+
+    private List<Product> BinaryTable { get; set; } = [];
+    private long BinaryNumber { get; set; }
+    private int DecimalNumber { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _products = ProductService.GetProducts().Reverse().ToArray();
+        _maximumBinaryValue = ProductService.GetMaximumBinaryValue();
+        _maximumDecimalValue = ProductService.GetMaximumDecimalValue();
+
+        SetBinaryTable(ProductService.GetDefaultBinaryTableValue());
+    }
+
+    private void BinaryToDecimal(ChangeEventArgs binaryValue)
+    {
+        if (binaryValue.Value is not null)
+        {
+            SetBinaryNumber(Convert.ToInt64(binaryValue.Value));
+        }
+    }
+
+    private void DecimalToBinary(ChangeEventArgs decimalValue)
+    {
+        if (decimalValue.Value is not null)
+        {
+            SetDecimalNumber(decimalValue);
+        }
+    }
+
+    private void UpdateBinaryChar(ChangeEventArgs obj, Product currentProduct)
+    {
+        var value = obj.Value is not null && Convert.ToBoolean(obj.Value);
+
+        var product = BinaryTable.FirstOrDefault(p => p.Id == currentProduct.Id);
+        product?.SetValue(value);
+
+        var binaryResult = BinaryTable.Select(b => b.Value ? "1" : "0")
+            .Aggregate(string.Empty, (current, s) => current + s);
+
+        SetBinaryNumber(Convert.ToInt64(binaryResult));
+    }
+
+    private void SetDecimalNumber(ChangeEventArgs decimalValue)
+    {
+        try
+        {
+            var decimalNumber = Convert.ToInt32(decimalValue.Value);
+
+            DecimalNumber = decimalNumber > _maximumDecimalValue ? _maximumDecimalValue : decimalNumber;
+
+            BinaryNumber = BinaryCalculatorService.DecimalToBinary(DecimalNumber);
+            BinaryToChar(BinaryNumber);
+        }
+        catch (Exception)
+        {
+            SetMaximumBinaryValue();
+        }
+    }
+
+    private void BinaryToChar(long binaryNumber)
+    {
+        var binaryList = BinaryCalculatorService.BinaryToBool(binaryNumber, _products.Length);
+
+        SetBinaryTable(binaryList);
+    }
+
+    private void SetBinaryTable(bool[] binaryList)
+    {
+        BinaryTable = [];
+
+        for (uint i = 0; i < binaryList.Length; i++)
+        {
+            BinaryTable.Add(new Product(i, binaryList[i]));
+        }
+    }
+
+    private void SetBinaryNumber(long binaryNumber)
+    {
+        try
+        {
+            BinaryNumber = binaryNumber > _maximumBinaryValue ? _maximumBinaryValue : binaryNumber;
+
+            DecimalNumber = BinaryCalculatorService.BinaryToDecimal(BinaryNumber);
+            BinaryToChar(BinaryNumber);
+        }
+        catch (Exception)
+        {
+            SetMaximumBinaryValue();
+        }
+    }
+
+    private void SetMaximumBinaryValue()
+    {
+        BinaryNumber = _maximumBinaryValue;
+        DecimalNumber = BinaryCalculatorService.BinaryToDecimal(BinaryNumber);
+        BinaryToChar(BinaryNumber);
+    }
+
+    public class Product(uint id, bool value)
+    {
+        public uint Id { get; } = id;
+        public bool Value { get; private set; } = value;
+
+        public void SetValue(bool setValue) => Value = setValue;
+    }
+}

@@ -1,4 +1,4 @@
-namespace VTools.Components.Services;
+namespace VTools.Services;
 
 public class RotateService(int value = 0)
 {
