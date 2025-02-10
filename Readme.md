@@ -26,7 +26,6 @@ if (builder.Environment.IsEnvironment("Local"))
     StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
 }
 ```
-test
 
 # Ressources
 
