@@ -2,11 +2,11 @@ namespace VTools.Models.EnVrac;
 
 public enum Category
 {
-    Youtube,
+    Vidéos,
     Articles,
     Tools,
-    Podcast,
-    Livre,
+    Podcasts,
+    Livres,
     PutAside
 }
 
@@ -15,23 +15,23 @@ public static class CategoryExtensions
     public static Category ConvertToCategory(this string? content) =>
         content switch
         {
-            nameof(Category.Youtube) => Category.Youtube,
+            nameof(Category.Vidéos) => Category.Vidéos,
             nameof(Category.Articles) => Category.Articles,
             nameof(Category.Tools) => Category.Tools,
-            nameof(Category.Podcast) => Category.Podcast,
-            nameof(Category.Livre) => Category.Livre,
+            nameof(Category.Podcasts) => Category.Podcasts,
+            nameof(Category.Livres) => Category.Livres,
             _ => Category.PutAside
         };
 
     public static string ToCategoryString(this Category category) =>
         category.ToString() switch
         {
-            nameof(Category.Youtube) => "🎞️ Youtube",
+            nameof(Category.Vidéos) => "🎞️ Vidéos",
             nameof(Category.Articles) => "📖 Articles",
             nameof(Category.Tools) => "🛠️ Tools",
-            nameof(Category.Podcast) => "🎧 Podcasts",
-            nameof(Category.Livre) => "📚 Livres",
-            _ => "Autre"
+            nameof(Category.Podcasts) => "🎧 Podcasts",
+            nameof(Category.Livres) => "📚 Livres",
+            _ => "Autres"
         };
 
 }
