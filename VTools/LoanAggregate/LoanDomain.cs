@@ -1,5 +1,3 @@
-using NodaTime;
-using VTools.Data.Repositories;
 using VTools.Data.Repositories.Interfaces;
 using VTools.LoanAggregate.Models;
 using VTools.LoanAggregate.Projections;
@@ -8,12 +6,10 @@ namespace VTools.LoanAggregate;
 
 public class LoanDomain : ILoanDomain
 {
-    private readonly IClock _clock;
     private readonly ILoanRepository _repository;
 
-    public LoanDomain(IClock clock, ILoanRepository repository)
+    public LoanDomain(ILoanRepository repository)
     {
-        _clock = clock;
         _repository = repository;
     }
 
@@ -22,7 +18,7 @@ public class LoanDomain : ILoanDomain
         var loan = Loan.Create(
             command.Title,
             command.Borrower,
-            _clock.GetCurrentInstant());
+            command.LoanStartDate);
 
         await _repository.CreateAsync(loan);
     }

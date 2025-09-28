@@ -1,4 +1,5 @@
-@* @page "/MyLoans" *@
+@page "/MyLoans"
+
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
@@ -20,6 +21,7 @@
 <div class="input-group mb-3">
     <input type="text" class="form-control" placeholder="Titre du livre" aria-label="Titre du livre" aria-describedby="Title" @bind="_newTitle">
     <input type="text" class="form-control" placeholder="Emprunteur" aria-label="Recipient's username" aria-describedby="button-addon2" @bind="_borrower">
+    <input type="date" class="form-control" placeholder="" aria-label="Recipient's username" aria-describedby="button-addon3" @bind="_date">
     <button class="btn btn-outline-success" type="button" id="button-addon2" @onclick="@(() => Add())">
         <i class="bi bi-plus"></i>
     </button>
@@ -31,7 +33,7 @@
         <th>Titre</th>
         <th>Emprunteur</th>
         <th>Depuis le</th>
-        <th></th>
+        <th>Rendu le</th>
         <th></th>
     </tr>
     </thead>
@@ -42,24 +44,27 @@
             <td>@loan.Title</td>
             <td>@loan.Borrower</td>
             <td>
-                @if (loan.IsRendered is false)
-                {
-                    @loan.LoanStartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-                }
+                @loan.LoanStartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
             </td>
             <td>
                 @if (loan.IsRendered)
                 {
-                    <i class="bi bi-check2"></i>
+                    @loan.LoanEndDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
                 }
             </td>
             <td>
 
                 <div class="input-group mb-3">
-                    @if (loan.IsRendered is false)
+                    @if (loan.IsRendered)
                     {
-                        <button type="button" class="btn btn-outline-primary" @onclick="@(() => Edit(loan.Id))">
-                            Rendu
+                        <button type="button" class="btn btn-outline-warning" @onclick="@(() => SetIsNotRendered(loan.Id))">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-primary" @onclick="@(() => SetIsRendered(loan.Id))">
+                            <i class="bi bi-check2"></i>
                         </button>
                     }
                     <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(loan.Id))">
@@ -79,6 +84,7 @@
 
     private string _newTitle = string.Empty;
     private string _borrower = string.Empty;
+    private DateTime _date = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,18 +103,38 @@
 
     private async Task Add()
     {
-        await LoanDomain.CreateAsync(new CreateLoanCommand(_newTitle, _borrower));
+        await LoanDomain.CreateAsync(new CreateLoanCommand(_newTitle, _borrower, Instant.FromDateTimeUtc(_date.ToUniversalTime())));
 
         await GetLoans();
     }
 
-    private void Edit(Guid loanId)
+    private void SetIsRendered(Guid loanId)
     {
         var renderedLoan = _loans.Find(l => l.Id == loanId);
 
         if (renderedLoan is not null)
         {
             renderedLoan.Rendered(GetCurrentInstant());
+
+            LoanDomain.UpdateAsync(
+                new UpdateLoanCommand(
+                    renderedLoan.Id,
+                    renderedLoan.Title,
+                    renderedLoan.Borrower,
+                    renderedLoan.IsRendered,
+                    renderedLoan.LoanEndDate));
+
+            SortList();
+        }
+    }
+
+    private void SetIsNotRendered(Guid loanId)
+    {
+        var renderedLoan = _loans.Find(l => l.Id == loanId);
+
+        if (renderedLoan is not null)
+        {
+            renderedLoan.NotRendered();
 
             LoanDomain.UpdateAsync(
                 new UpdateLoanCommand(
@@ -179,6 +205,12 @@
         {
             LoanEndDate = loanEnDate;
             IsRendered = true;
+        }
+
+        public void NotRendered()
+        {
+            LoanEndDate = null;
+            IsRendered = false;
         }
 
         public void Delete()

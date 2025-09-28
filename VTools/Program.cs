@@ -3,9 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NodaTime;
 using Npgsql;
-using VTools.BadDayPostAggregate;
 using VTools.Components;
 using VTools.Components.Account;
 using VTools.Data;
@@ -14,9 +12,6 @@ using VTools.Data.Repositories;
 using VTools.Data.Repositories.Interfaces;
 using VTools.Extension;
 using VTools.LoanAggregate;
-using VTools.Services;
-using VTools.Services.Interfaces;
-using VTools.UserAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,52 +23,52 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// builder.Services.AddCascadingAuthenticationState();
-// builder.Services.AddScoped<IdentityUserAccessor>();
-// builder.Services.AddScoped<IdentityRedirectManager>();
-// builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityUserAccessor>();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-// builder.Services.AddAuthentication(options =>
-//     {
-//         options.DefaultScheme = IdentityConstants.ApplicationScheme;
-//         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-//     })
-//     .AddIdentityCookies();
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+    })
+    .AddIdentityCookies();
 
-// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-//                        throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-//
-// builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//     options.UseNpgsql(connectionString));
-// builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-//
-// DefaultTypeMap.MatchNamesWithUnderscores = true;
-// SqlMapper.AddTypeHandler(new InstantHandler());
-//
-// builder.Services.AddNpgsqlDataSource(
-//     connectionString,
-//     builder => builder.UseNodaTime());
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+                       throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-//     .AddEntityFrameworkStores<ApplicationDbContext>()
-//     .AddSignInManager()
-//     .AddDefaultTokenProviders();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+DefaultTypeMap.MatchNamesWithUnderscores = true;
+SqlMapper.AddTypeHandler(new InstantHandler());
+
+builder.Services.AddNpgsqlDataSource(
+    connectionString,
+    builder => builder.UseNodaTime());
+
+builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddHttpClient();
 
 // builder.Services.AddTransient<IUserRepository, UserRepository>(_ =>
 //     new UserRepository(connectionString));
-// builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
-//     new LoanRepository(connectionString));
+builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
+    new LoanRepository(connectionString));
 // builder.Services.AddTransient<IBadDayPostRepository, BadDayPostRepository>(_ =>
 //     new BadDayPostRepository(connectionString));
 
 // builder.Services.AddTransient<IUserDomain, UserDomain>();
-// builder.Services.AddTransient<ILoanDomain, LoanDomain>();
+builder.Services.AddTransient<ILoanDomain, LoanDomain>();
 // builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
 
-// builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-//
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
 // builder.Services.AddAuthorizationCore(options =>
 //     options.AddPolicy("EditUser", policy =>
 //         policy.RequireAssertion(context =>
@@ -124,6 +119,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
-// app.MapAdditionalIdentityEndpoints();
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();
