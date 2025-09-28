@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using VTools.BookEntity;
 using VTools.Components;
 using VTools.Components.Account;
 using VTools.Data;
@@ -60,11 +61,14 @@ builder.Services.AddHttpClient();
 //     new UserRepository(connectionString));
 builder.Services.AddTransient<ILoanRepository, LoanRepository>(_ =>
     new LoanRepository(connectionString));
+builder.Services.AddTransient<IBookRepository, BookRepository>(_ =>
+    new BookRepository(connectionString));
 // builder.Services.AddTransient<IBadDayPostRepository, BadDayPostRepository>(_ =>
 //     new BadDayPostRepository(connectionString));
 
 // builder.Services.AddTransient<IUserDomain, UserDomain>();
 builder.Services.AddTransient<ILoanDomain, LoanDomain>();
+builder.Services.AddTransient<IBookDomain, BookDomain>();
 // builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();

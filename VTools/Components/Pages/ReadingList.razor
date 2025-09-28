@@ -1,0 +1,166 @@
+@page "/ReadingList"
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@inject IBookDomain BookDomain;
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using NodaTime
+@using VTools.BookEntity
+@using VTools.BookEntity.Models
+@using VTools.BookEntity.Projections
+
+@attribute [Authorize]
+
+<PageTitle>Liste de lecture</PageTitle>
+
+<h3 class="text-center mb-4">Liste de lecture</h3>
+
+<div class="input-group mb-3">
+    <input type="text" class="form-control" placeholder="Titre du livre" aria-label="Titre du livre"
+           aria-describedby="Title" @bind="_newTitle">
+    <input type="text" class="form-control" placeholder="Auteur" aria-label="Auteur" aria-describedby="button-addon2"
+           @bind="_author">
+    <input type="checkbox" class="form-control" placeholder="IsReading" aria-label="IasReading"
+           aria-describedby="isChecked" @bind="_isReading">
+    @if (_isReading)
+    {
+        <input type="date" class="form-control" placeholder="Terminé le" aria-label="Terminé le"
+               aria-describedby="button-addon3" @bind="_endReadingDate">
+    }
+    <button class="btn btn-outline-success" type="button" id="button-addon2" @onclick="@(() => Add())">
+        <i class="bi bi-plus"></i>
+    </button>
+</div>
+
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Titre</th>
+        <th>Auteur</th>
+        <th>Depuis le</th>
+        <th>Rendu le</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var book in _books)
+    {
+        <tr>
+            <td>@book.Title</td>
+            <td>@book.Author</td>
+            <td>
+                @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+            </td>
+            <td>
+                @if (book.IsReading)
+                {
+                    @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                }
+            </td>
+            <td>
+
+                <div class="input-group mb-3">
+                    @if (book.IsReading)
+                    {
+                        @* <button type="button" class="btn btn-outline-warning" *@
+                        @*         @onclick="@(() => SetIsNotRendered(book.Id))"> *@
+                        @*     <i class="bi bi-slash-circle"></i> *@
+                        @* </button> *@
+                    }
+                    else
+                    {
+                        @* <button type="button" class="btn btn-outline-primary" *@
+                        @*         @onclick="@(() => SetIsRendered(book.Id))"> *@
+                        @*     <i class="bi bi-check2"></i> *@
+                        @* </button> *@
+                    }
+                    @* <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(book.Id))"> *@
+                    @*     <i class="bi bi-trash-fill"></i> *@
+                    @* </button> *@
+                </div>
+
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    private List<Book> _books = [];
+
+    private string _newTitle = string.Empty;
+    private string _author = string.Empty;
+    private bool _isReading;
+
+    private DateTime _endReadingDate = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await GetBooks();
+
+        SortList();
+    }
+
+    private async Task Add()
+    {
+        await BookDomain.CreateAsync(new CreateBookCommand(_newTitle, _author, "", _isReading, Instant.FromDateTimeUtc(_endReadingDate.ToUniversalTime())));
+
+        await GetBooks();
+    }
+
+    private async Task GetBooks()
+    {
+        var booksProjection = await BookDomain.GetAllAsync(100, 0);
+
+        _books = booksProjection.Books.Select(l => (Book)l).ToList();
+
+        SortList();
+    }
+
+    private void SortList()
+    {
+        _books = _books.OrderBy(l => l.IsReading).ThenBy(l => l.EndReadingDate).ToList();
+        StateHasChanged();
+    }
+
+    public class Book
+    {
+        public Book(
+            Guid id,
+            string title,
+            string author,
+            string comment,
+            bool isReading,
+            Instant? endReadingDate)
+        {
+            Id = id;
+            Title = title;
+            Author = author;
+            Comment = comment;
+            IsReading = isReading;
+            EndReadingDate = endReadingDate;
+        }
+
+        public Guid Id { get; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public bool IsReading { get; set; }
+        public string Comment { get; set; }
+        public Instant? EndReadingDate { get; set; }
+
+        public static explicit operator Book(BookProjection book) => new(
+            book.Id,
+            book.Title,
+            book.Author,
+            book.Comment,
+            book.IsReading,
+            book.EndReadingDate);
+    }
+
+}

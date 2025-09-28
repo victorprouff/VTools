@@ -47,7 +47,7 @@ public class UserDomain : IUserDomain
         var salt = _passwordEncryptor.GenerateSalt();
         var passwordHash = _passwordEncryptor.GenerateHash(user.Password, salt);
 
-        var newUser = User.Create(user.Email, user.username, passwordHash, salt, false,_clock.GetCurrentInstant());
+        var newUser = User.Create(user.Email, user.username, passwordHash, salt, false, _clock.GetCurrentInstant());
         await _repository.CreateAsync(newUser, cancellationToken);
 
         return newUser.Id;
