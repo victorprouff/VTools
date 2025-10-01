@@ -24,7 +24,7 @@ public class BookRepository(string connectionString) : BaseRepository(connection
                 book.EndReadingDate,
                 book.Comment,
                 book.CreatedAt,
-                book.UpdatedAt,
+                book.UpdatedAt
             }, commandTimeout: 1);
     }
 
@@ -38,7 +38,7 @@ public class BookRepository(string connectionString) : BaseRepository(connection
                                author = @Author,
                                is_reading = @IsReading,
                                comment = @Comment,
-                               end_reading_date = @EndReadingDate
+                               end_reading_date = @EndReadingDate,
                                updated_at = @UpdatedAt
                            WHERE id = @Id;
                            """;
@@ -50,16 +50,19 @@ public class BookRepository(string connectionString) : BaseRepository(connection
                 book.Title,
                 book.Author,
                 book.IsReading,
+                book.Comment,
                 book.EndReadingDate,
-                book.Comment
+                book.UpdatedAt,
+                book.Id
             },
-            commandTimeout: 1);    }
+            commandTimeout: 1);
+    }
 
     public async Task Delete(Guid id)
     {
         await using var connection = GetConnection();
         const string sql = """
-                           DELETE FROM Books 
+                           DELETE FROM books 
                            WHERE id = @Id;
                            """;
 
@@ -93,7 +96,7 @@ public class BookRepository(string connectionString) : BaseRepository(connection
     {
         const string sql = """
                                SELECT b.id, b.title, b.author, b.is_reading, b.comment, b.end_reading_date, b.created_at, b.updated_at
-                               FROM books l
+                               FROM books b
                                WHERE b.id = @Id;
                            """;
 
@@ -107,9 +110,9 @@ public class BookRepository(string connectionString) : BaseRepository(connection
     public async Task<Book?> GetById(Guid id)
     {
         const string sql = """
-                               SELECT l.id, l.title, l.borrower, l.is_rendered, l.is_visible, l.loan_start_date, l.loan_end_date, l.created_at, l.updated_at
-                              FROM loans l
-                              WHERE l.id = @Id;
+                           SELECT b.id, b.title, b.author, b.is_reading, b.comment, b.end_reading_date, b.created_at, b.updated_at
+                           FROM books b
+                           WHERE b.id = @Id;
                            """;
 
         await using var connexion = GetConnection();

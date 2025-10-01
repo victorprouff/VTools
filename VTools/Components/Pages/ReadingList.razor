@@ -43,6 +43,7 @@
         <th>Auteur</th>
         <th>Terminé le</th>
         <th></th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
@@ -52,35 +53,31 @@
             <td>@book.Title</td>
             <td>@book.Author</td>
             <td>
-                @* @if (book.IsReading) *@
-                @* { *@
-                @*     @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) *@
-                @* } *@
-                @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                <Switch @bind-Value="@book.IsReading" @onclick="() => book.IsUpdate = !book.IsUpdate"/>
             </td>
             <td>
-
+                @if (book.IsReading)
+                {
+                    if (book.IsUpdate)
+                    {
+                        <InputDate Type="InputDateType.Date" class="form-control"
+                                   max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind-Value="@book.EndReadingDate"/>
+                    }
+                }
+                else
+                {
+                    @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                }
+            </td>
+            <td>
                 <div class="input-group mb-3">
                     @if (book.IsUpdate)
                     {
-                        <Switch @bind-Value="@book.IsReading" Label="A été lu" />
-                        @if (book.IsReading)
-                        {
-                            <InputDate Type="InputDateType.Date" class="form-control"
-                                       max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind-Value="@book.EndReadingDate" />
-                        }
-                        @* <input type="date" class="form-control" placeholder="Terminé le" aria-label="Terminé le" *@
-                        @*        aria-describedby="button-addon3" @bind-Value="" @onchange="@(() => Update(book))"> *@
-
                         <button type="button" class="btn btn-outline-primary"
                                 @onclick="@(() => Update(book))">
                             <i class="bi bi-floppy2"></i>
                         </button>
                     }
-                    <input type="checkbox" class="btn-check" id=@book.Id autocomplete="off" @bind="@book.IsUpdate">
-                    <label class="btn btn-outline-primary" for=@book.Id>
-                        <i class="bi bi-pencil-square"></i>
-                    </label>
                     <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(book.Id))">
                         <i class="bi bi-trash-fill"></i>
                     </button>
@@ -135,7 +132,7 @@
 
     private void SortList()
     {
-        _books = _books.OrderBy(l => l.IsReading).ThenBy(l => l.EndReadingDate).ToList();
+        // _books = _books.OrderBy(l => l.IsReading).ThenBy(l => l.EndReadingDate).ToList();
         StateHasChanged();
     }
 
@@ -149,7 +146,7 @@
             endReadingDate = book.EndReadingDate is not null ? Instant.FromDateTimeUtc(toto.ToUniversalTime()) : null;
         }
 
-        await BookDomain.UpdateAsync(new UpdateBookCommand(book.Id, book.Title, book.Author, "", _isReading, endReadingDate));
+        await BookDomain.UpdateAsync(new UpdateBookCommand(book.Id, book.Title, book.Author, "", book.IsReading, endReadingDate));
 
         await GetBooks();
     }
