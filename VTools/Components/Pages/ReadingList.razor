@@ -23,8 +23,8 @@
            aria-describedby="Title" @bind="_newTitle">
     <input type="text" class="form-control" placeholder="Auteur" aria-label="Auteur" aria-describedby="button-addon2"
            @bind="_author">
-    <input type="checkbox" class="form-control" placeholder="IsReading" aria-label="IasReading"
-           aria-describedby="isChecked" @bind="_isReading">
+    <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off" @bind="_isReading">
+    <label class="btn btn-outline-primary" for="btn-check-outlined">Terminé</label><br>
     @if (_isReading)
     {
         <input type="date" class="form-control" placeholder="Terminé le" aria-label="Terminé le"
@@ -41,8 +41,7 @@
     <tr>
         <th>Titre</th>
         <th>Auteur</th>
-        <th>Depuis le</th>
-        <th>Rendu le</th>
+        <th>Terminé le</th>
         <th></th>
     </tr>
     </thead>
@@ -53,34 +52,38 @@
             <td>@book.Title</td>
             <td>@book.Author</td>
             <td>
+                @* @if (book.IsReading) *@
+                @* { *@
+                @*     @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) *@
+                @* } *@
                 @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-            </td>
-            <td>
-                @if (book.IsReading)
-                {
-                    @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-                }
             </td>
             <td>
 
                 <div class="input-group mb-3">
-                    @if (book.IsReading)
+                    @if (book.IsUpdate)
                     {
-                        @* <button type="button" class="btn btn-outline-warning" *@
-                        @*         @onclick="@(() => SetIsNotRendered(book.Id))"> *@
-                        @*     <i class="bi bi-slash-circle"></i> *@
-                        @* </button> *@
+                        <Switch @bind-Value="@book.IsReading" Label="A été lu" />
+                        @if (book.IsReading)
+                        {
+                            <InputDate Type="InputDateType.Date" class="form-control"
+                                       max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind-Value="@book.EndReadingDate" />
+                        }
+                        @* <input type="date" class="form-control" placeholder="Terminé le" aria-label="Terminé le" *@
+                        @*        aria-describedby="button-addon3" @bind-Value="" @onchange="@(() => Update(book))"> *@
+
+                        <button type="button" class="btn btn-outline-primary"
+                                @onclick="@(() => Update(book))">
+                            <i class="bi bi-floppy2"></i>
+                        </button>
                     }
-                    else
-                    {
-                        @* <button type="button" class="btn btn-outline-primary" *@
-                        @*         @onclick="@(() => SetIsRendered(book.Id))"> *@
-                        @*     <i class="bi bi-check2"></i> *@
-                        @* </button> *@
-                    }
-                    @* <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(book.Id))"> *@
-                    @*     <i class="bi bi-trash-fill"></i> *@
-                    @* </button> *@
+                    <input type="checkbox" class="btn-check" id=@book.Id autocomplete="off" @bind="@book.IsUpdate">
+                    <label class="btn btn-outline-primary" for=@book.Id>
+                        <i class="bi bi-pencil-square"></i>
+                    </label>
+                    <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(book.Id))">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
                 </div>
 
             </td>
@@ -109,7 +112,14 @@
 
     private async Task Add()
     {
-        await BookDomain.CreateAsync(new CreateBookCommand(_newTitle, _author, "", _isReading, Instant.FromDateTimeUtc(_endReadingDate.ToUniversalTime())));
+        if (string.IsNullOrWhiteSpace(_newTitle))
+        {
+            return;
+        }
+
+        Instant? endReadingDate = _isReading ? Instant.FromDateTimeUtc(_endReadingDate.ToUniversalTime()) : null;
+
+        await BookDomain.CreateAsync(new CreateBookCommand(_newTitle, _author, "", _isReading, endReadingDate));
 
         await GetBooks();
     }
@@ -129,6 +139,28 @@
         StateHasChanged();
     }
 
+    private async Task Update(Book book)
+    {
+        Instant? endReadingDate = null;
+        if (book.IsReading)
+        {
+            DateTime toto = book.EndReadingDate ?? DateTime.Now;
+
+            endReadingDate = book.EndReadingDate is not null ? Instant.FromDateTimeUtc(toto.ToUniversalTime()) : null;
+        }
+
+        await BookDomain.UpdateAsync(new UpdateBookCommand(book.Id, book.Title, book.Author, "", _isReading, endReadingDate));
+
+        await GetBooks();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await BookDomain.DeleteAsync(id);
+
+        await GetBooks();
+    }
+
     public class Book
     {
         public Book(
@@ -137,7 +169,7 @@
             string author,
             string comment,
             bool isReading,
-            Instant? endReadingDate)
+            DateTime? endReadingDate)
         {
             Id = id;
             Title = title;
@@ -151,8 +183,10 @@
         public string Title { get; set; }
         public string Author { get; set; }
         public bool IsReading { get; set; }
+        public bool IsUpdate { get; set; }
         public string Comment { get; set; }
-        public Instant? EndReadingDate { get; set; }
+        // public Instant? EndReadingDate { get; set; }
+        public DateTime? EndReadingDate { get; set; }
 
         public static explicit operator Book(BookProjection book) => new(
             book.Id,
@@ -160,7 +194,7 @@
             book.Author,
             book.Comment,
             book.IsReading,
-            book.EndReadingDate);
+            book.EndReadingDate?.ToDateTimeUtc());
     }
 
 }
