@@ -18,19 +18,23 @@
 
 <h3 class="text-center mb-4">Liste de lecture</h3>
 
-<div class="input-group mb-3">
-    <input type="text" class="form-control" placeholder="Titre du livre" aria-label="Titre du livre"
+<div class="input-group row">
+    <input type="text" class="form-control col-3" placeholder="Titre du livre" aria-label="Titre du livre"
            aria-describedby="Title" @bind="_newTitle">
-    <input type="text" class="form-control" placeholder="Auteur" aria-label="Auteur" aria-describedby="button-addon2"
+    <input type="text" class="form-control col-3" placeholder="Auteur" aria-label="Auteur" aria-describedby="button-addon2"
            @bind="_author">
-    <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off" @bind="_isReading">
-    <label class="btn btn-outline-primary" for="btn-check-outlined">Terminé</label><br>
+
     @if (_isReading)
     {
-        <input type="date" class="form-control" placeholder="Terminé le" aria-label="Terminé le"
+        <Switch @bind-Value="_isReading" class="col-2" Label="Est terminé"/>
+        <input type="date" class="form-control col-3" placeholder="Terminé le" aria-label="Terminé le"
                aria-describedby="button-addon3" @bind="_endReadingDate">
     }
-    <button class="btn btn-outline-success" type="button" id="button-addon2" @onclick="@(() => Add())">
+    else
+    {
+        <Switch @bind-Value="_isReading" class="col-5" Label="Est terminé"/>
+    }
+    <button class="btn btn-outline-success col-1" type="button" id="button-addon2" @onclick="@(() => Add())">
         <i class="bi bi-plus"></i>
     </button>
 </div>
@@ -38,24 +42,24 @@
 
 <table class="table">
     <thead>
-    <tr>
-        <th>Titre</th>
-        <th>Auteur</th>
-        <th>Terminé le</th>
-        <th></th>
-        <th></th>
+    <tr class="row">
+        <th class="col-3">Titre</th>
+        <th class="col-2">Auteur</th>
+        <th class="col-2">Terminé le</th>
+        <th class="col-3"></th>
+        <th class="col-2"></th>
     </tr>
     </thead>
     <tbody>
     @foreach (var book in _books)
     {
-        <tr>
-            <td>@book.Title</td>
-            <td>@book.Author</td>
-            <td>
+        <tr class="row">
+            <td class="col-3">@book.Title</td>
+            <td class="col-2">@book.Author</td>
+            <td class="col-2">
                 <Switch @bind-Value="@book.IsReading" @onclick="() => book.IsUpdate = !book.IsUpdate"/>
             </td>
-            <td>
+            <td class="col-3">
                 @if (book.IsReading)
                 {
                     if (book.IsUpdate)
@@ -63,13 +67,14 @@
                         <InputDate Type="InputDateType.Date" class="form-control"
                                    max="@DateTime.Today.ToString("yyyy-MM-dd")" @bind-Value="@book.EndReadingDate"/>
                     }
+                    else
+                    {
+                        @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                    }
                 }
-                else
-                {
-                    @book.EndReadingDate?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-                }
+
             </td>
-            <td>
+            <td class="col-2">
                 <div class="input-group mb-3">
                     @if (book.IsUpdate)
                     {
