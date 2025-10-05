@@ -13,6 +13,7 @@ using VTools.Data.Repositories;
 using VTools.Data.Repositories.Interfaces;
 using VTools.Extension;
 using VTools.LoanAggregate;
+using VTools.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,7 @@ builder.Services.AddTransient<IBookRepository, BookRepository>(_ =>
 builder.Services.AddTransient<ILoanDomain, LoanDomain>();
 builder.Services.AddTransient<IBookDomain, BookDomain>();
 // builder.Services.AddTransient<IBadDayPostDomain, BadDayPostDomain>();
+builder.Services.AddTransient<IConnectDrive, WebDavClient>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

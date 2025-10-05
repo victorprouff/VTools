@@ -1,0 +1,72 @@
+@page "/kdrive"
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@inject IConnectDrive connectDrive;
+
+@using System.Net.Http.Headers
+@using System.Text
+@using Microsoft.AspNetCore.Authorization
+@using VTools.Services.Interfaces
+
+@attribute [Authorize]
+
+<PageTitle>kDrive</PageTitle>
+
+<h3 class="text-center mb-4">kDrive</h3>
+
+<div class="input-group row">
+    <input type="text" class="form-control col-3" placeholder="Path" aria-label="Path" aria-describedby="button-addon2"
+           @bind="_path">
+    <button class="btn btn-outline-success" type="button" id="button-addon2" @onclick="@(() => Action())">
+        Action
+    </button>
+</div>
+
+
+
+
+@code {
+    private string _path = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+
+
+    private async Task Action()
+    {
+        var username = "contact@victorprouff.fr";
+        var password = "e0DGHFXGMsENyJmt";
+
+        // var baseUri = new Uri("davs://243630.connect.kdrive.infomaniak.com/");
+        var baseUri = new Uri("https://243630.connect.kdrive.infomaniak.com/");
+        var httpclient = new HttpClient { BaseAddress = baseUri };
+        var credential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+
+        httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+        httpclient.DefaultRequestHeaders.UserAgent.Clear();
+        httpclient.DefaultRequestHeaders.UserAgent.ParseAdd("ls.svr.webdav/1.0");
+
+        var dav = new WebDavClient(httpclient);
+
+        // var items = await dav.GetFile($"./{_path}");
+        var items = await dav.ListDirectory($"./{_path}", 1);
+
+        if (!items.IsSuccess)
+        {
+            Console.WriteLine("Request failed.");
+            Console.WriteLine(items.StatusCode);
+            // Environment.Exit(1);
+        }
+
+        foreach (var item in items.Responses!)
+        {
+            Console.WriteLine(item.FullName);
+        }
+    }
+
+}
