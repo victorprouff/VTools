@@ -46,6 +46,8 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: "User ID=${DB_USER};Password=${DB_PASSWORD};Server=db;Port=5432;Database=vTools;Pooling=true;"
       ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
     networks:
       - vtools-network
     restart: unless-stopped

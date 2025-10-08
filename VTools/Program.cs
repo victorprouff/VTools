@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -15,6 +16,14 @@ using VTools.Extension;
 using VTools.LoanAggregate;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuration pour les reverse proxies (Coolify, nginx, etc.)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddBlazorBootstrap();
 
@@ -103,6 +112,8 @@ if (builder.Environment.IsEnvironment("Local"))
 }
 
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     // app.UseMigrationsEndPoint();
@@ -111,10 +122,12 @@ else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    // Ne pas utiliser HSTS car Coolify gère le HTTPS
+    // app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Ne pas rediriger vers HTTPS car le container écoute en HTTP et Coolify gère le HTTPS
+// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
