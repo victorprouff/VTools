@@ -22,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: DbMigration/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
     depends_on:
       db:
         condition: service_healthy
@@ -36,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: VTools/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
     ports:
       - 7850:8080
     depends_on:
