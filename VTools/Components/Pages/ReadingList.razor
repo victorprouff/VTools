@@ -16,7 +16,7 @@
 
 <PageTitle>Liste de lecture</PageTitle>
 
-<h3 class="text-center mb-4" style="margin-top: 100px;">Liste de lecture</h3>
+<h3 class="text-center mb-4 mt-4">Liste de lecture</h3>
 
 <div class="input-group row">
     <input type="text" class="form-control col-3" placeholder="Titre du livre" aria-label="Titre du livre"
@@ -38,9 +38,11 @@
         <i class="bi bi-plus"></i>
     </button>
 </div>
+<div class="input-group row mt-3">
+    <InputText class="form-control" colspan="5" @bind-Value="_comment" placeholder="Commentaire..." />
+</div>
 
-
-<table class="table">
+<table class="table mt-3">
     <thead>
     <tr class="row">
         <th class="col-3">Titre</th>
@@ -101,7 +103,7 @@
             <td colspan="5">
                 @if (book.IsUpdate)
                 {
-                    <InputText class="form-control" @bind-Value="@book.Comment"/>
+                    <InputText class="form-control" @bind-Value="@book.Comment" placeholder="Commentaire..." />
                 }
                 else
                 {
@@ -118,6 +120,7 @@
 
     private string _newTitle = string.Empty;
     private string _author = string.Empty;
+    private string _comment = string.Empty;
     private bool _isReading;
 
     private DateTime _endReadingDate = DateTime.Now;
@@ -140,7 +143,12 @@
 
         Instant? endReadingDate = _isReading ? Instant.FromDateTimeUtc(_endReadingDate.ToUniversalTime()) : null;
 
-        await BookDomain.CreateAsync(new CreateBookCommand(_newTitle, _author, "", _isReading, endReadingDate));
+        await BookDomain.CreateAsync(new CreateBookCommand(_newTitle, _author, _comment, _isReading, endReadingDate));
+
+        _newTitle = string.Empty;
+        _author = string.Empty;
+        _comment = string.Empty;
+        _isReading = false;
 
         await GetBooks();
     }
