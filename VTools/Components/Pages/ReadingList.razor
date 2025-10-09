@@ -16,7 +16,7 @@
 
 <PageTitle>Liste de lecture</PageTitle>
 
-<h3 class="text-center mb-4">Liste de lecture</h3>
+<h3 class="text-center mb-4" style="margin-top: 100px;">Liste de lecture</h3>
 
 <div class="input-group row">
     <input type="text" class="form-control col-3" placeholder="Titre du livre" aria-label="Titre du livre"
@@ -57,7 +57,7 @@
             <td class="col-3">@book.Title</td>
             <td class="col-2">@book.Author</td>
             <td class="col-2">
-                <Switch @bind-Value="@book.IsReading" @onclick="() => book.IsUpdate = !book.IsUpdate"/>
+                <Switch @bind-Value="@book.IsReading"/>
             </td>
             <td class="col-3">
                 @if (book.IsReading)
@@ -83,11 +83,30 @@
                             <i class="bi bi-floppy2"></i>
                         </button>
                     }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-primary"
+                                @onclick="@(() => book.IsUpdate = true)">
+                            <i class="bi bi-floppy2"></i>
+                        </button>
+                    }
                     <button type="button" class="btn btn-outline-danger" @onclick="@(() => Delete(book.Id))">
                         <i class="bi bi-trash-fill"></i>
                     </button>
                 </div>
 
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5">
+                @if (book.IsUpdate)
+                {
+                    <InputText class="form-control" @bind-Value="@book.Comment"/>
+                }
+                else
+                {
+                    @book.Comment
+                }
             </td>
         </tr>
     }
@@ -151,7 +170,7 @@
             endReadingDate = book.EndReadingDate is not null ? Instant.FromDateTimeUtc(toto.ToUniversalTime()) : null;
         }
 
-        await BookDomain.UpdateAsync(new UpdateBookCommand(book.Id, book.Title, book.Author, "", book.IsReading, endReadingDate));
+        await BookDomain.UpdateAsync(new UpdateBookCommand(book.Id, book.Title, book.Author, book.Comment, book.IsReading, endReadingDate));
 
         await GetBooks();
     }
