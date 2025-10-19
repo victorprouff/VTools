@@ -40,8 +40,8 @@ services:
       dockerfile: VTools/Dockerfile
       args:
         BUILD_CONFIGURATION: Release
-    ports:
-      - 7850:8080
+    expose:
+      - 8080
     depends_on:
       db:
         condition: service_healthy
@@ -55,6 +55,10 @@ services:
     networks:
       - vtools-network
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vtools.rule=Host(`testools.victorprouff.fr`)"
+      - "traefik.http.services.vtools.loadbalancer.server.port=8080"
 
 networks:
   vtools-network:
