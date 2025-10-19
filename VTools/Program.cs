@@ -30,6 +30,11 @@ builder.Configuration
     .AddEnvironmentVariables()
     .AddCommandLine(args);
 
+if (!builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseStaticWebAssets(); // Charge les assets statiques sans surveillance
+}
+
 // Configuration pour les reverse proxies (Coolify, nginx, etc.)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
