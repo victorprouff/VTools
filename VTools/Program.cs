@@ -15,7 +15,20 @@ using VTools.Data.Repositories.Interfaces;
 using VTools.Extension;
 using VTools.LoanAggregate;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    // Désactiver le rechargement automatique de la configuration
+    ContentRootPath = Directory.GetCurrentDirectory()
+});
+
+builder.Configuration.Sources.Clear();
+builder.Configuration
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables()
+    .AddCommandLine(args);
 
 // Configuration pour les reverse proxies (Coolify, nginx, etc.)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
