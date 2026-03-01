@@ -1,0 +1,96 @@
+@page "/books/add"
+@page "/books/{Id:int}/edit"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+@inject BookService BookService
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsEdit ? "Modifier le livre" : "Ajouter un livre")</PageTitle>
+
+<div class="page-header">
+    <h1>@(IsEdit ? "Modifier le livre" : "Ajouter un livre")</h1>
+</div>
+
+<div class="form-container">
+    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="title">Titre *</label>
+            <InputText id="title" @bind-Value="Model.Title" class="form-control" />
+            <ValidationMessage For="() => Model.Title" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <InputTextArea id="description" @bind-Value="Model.Description" class="form-control" rows="3" />
+        </div>
+
+        <div class="form-group">
+            <label for="enddate">Date de fin de lecture (laisser vide si non lu)</label>
+            <InputDate id="enddate" @bind-Value="Model.EndReadingDate" class="form-control" />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="/books" class="btn">Annuler</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private bool IsEdit => Id.HasValue;
+
+    private BookFormModel Model { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            var book = await BookService.GetByIdAsync(Id!.Value);
+            if (book is not null)
+            {
+                Model.Title = book.Title;
+                Model.Description = book.Description;
+                Model.EndReadingDate = book.EndReadingDate;
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (IsEdit)
+        {
+            var book = await BookService.GetByIdAsync(Id!.Value);
+            if (book is not null)
+            {
+                book.Title = Model.Title;
+                book.Description = Model.Description;
+                book.EndReadingDate = Model.EndReadingDate;
+                await BookService.UpdateAsync(book);
+            }
+        }
+        else
+        {
+            var book = new Book
+            {
+                Title = Model.Title,
+                Description = Model.Description,
+                EndReadingDate = Model.EndReadingDate
+            };
+            await BookService.AddAsync(book);
+        }
+        Navigation.NavigateTo("/books");
+    }
+
+    private class BookFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le titre est requis.")]
+        public string Title { get; set; } = "";
+        public string? Description { get; set; }
+        public DateOnly? EndReadingDate { get; set; }
+    }
+}

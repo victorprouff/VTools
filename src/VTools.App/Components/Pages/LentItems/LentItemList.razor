@@ -1,0 +1,63 @@
+@page "/lent-items"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+@inject LentItemService LentItemService
+@inject NavigationManager Navigation
+
+<PageTitle>Objets pretes</PageTitle>
+
+<div class="page-header">
+    <h1>Objets pretes</h1>
+    <a href="/lent-items/add" class="btn btn-primary">+ Ajouter</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Objet</th>
+            <th>Type</th>
+            <th>Prete a</th>
+            <th>Date de pret</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@(item.Type == ItemType.Book ? "Livre" : "Autre")</td>
+                <td>@item.LentTo</td>
+                <td>@item.LentDate.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <a href="/lent-items/@item.Id/edit" class="btn btn-sm">Modifier</a>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteItem(item.Id)">Supprimer</button>
+                </td>
+            </tr>
+        }
+        @if (!Items.Any())
+        {
+            <tr><td colspan="5">Aucun objet prete.</td></tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<LentItem> Items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItems();
+    }
+
+    private async Task LoadItems()
+    {
+        Items = await LentItemService.GetAllAsync();
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        await LentItemService.DeleteAsync(id);
+        await LoadItems();
+    }
+}

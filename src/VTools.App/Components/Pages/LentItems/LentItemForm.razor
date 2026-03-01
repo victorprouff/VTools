@@ -1,0 +1,115 @@
+@page "/lent-items/add"
+@page "/lent-items/{Id:int}/edit"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+@inject LentItemService LentItemService
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsEdit ? "Modifier l'objet" : "Ajouter un objet")</PageTitle>
+
+<div class="page-header">
+    <h1>@(IsEdit ? "Modifier l'objet prete" : "Ajouter un objet prete")</h1>
+</div>
+
+<div class="form-container">
+    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="name">Nom *</label>
+            <InputText id="name" @bind-Value="Model.Name" class="form-control" />
+            <ValidationMessage For="() => Model.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="type">Type *</label>
+            <InputSelect id="type" @bind-Value="Model.Type" class="form-control">
+                <option value="@ItemType.Book">Livre</option>
+                <option value="@ItemType.Other">Autre</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="lentto">Prete a *</label>
+            <InputText id="lentto" @bind-Value="Model.LentTo" class="form-control" />
+            <ValidationMessage For="() => Model.LentTo" />
+        </div>
+
+        <div class="form-group">
+            <label for="lentdate">Date de pret *</label>
+            <InputDate id="lentdate" @bind-Value="Model.LentDate" class="form-control" />
+            <ValidationMessage For="() => Model.LentDate" />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="/lent-items" class="btn">Annuler</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private bool IsEdit => Id.HasValue;
+
+    private LentItemFormModel Model { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            var item = await LentItemService.GetByIdAsync(Id!.Value);
+            if (item is not null)
+            {
+                Model.Name = item.Name;
+                Model.Type = item.Type;
+                Model.LentTo = item.LentTo;
+                Model.LentDate = item.LentDate;
+            }
+        }
+        else
+        {
+            Model.LentDate = DateOnly.FromDateTime(DateTime.Today);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (IsEdit)
+        {
+            var item = await LentItemService.GetByIdAsync(Id!.Value);
+            if (item is not null)
+            {
+                item.Name = Model.Name;
+                item.Type = Model.Type;
+                item.LentTo = Model.LentTo;
+                item.LentDate = Model.LentDate;
+                await LentItemService.UpdateAsync(item);
+            }
+        }
+        else
+        {
+            var item = new LentItem
+            {
+                Name = Model.Name,
+                Type = Model.Type,
+                LentTo = Model.LentTo,
+                LentDate = Model.LentDate
+            };
+            await LentItemService.AddAsync(item);
+        }
+        Navigation.NavigateTo("/lent-items");
+    }
+
+    private class LentItemFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le nom est requis.")]
+        public string Name { get; set; } = "";
+        public ItemType Type { get; set; } = ItemType.Other;
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le destinataire est requis.")]
+        public string LentTo { get; set; } = "";
+        public DateOnly LentDate { get; set; }
+    }
+}

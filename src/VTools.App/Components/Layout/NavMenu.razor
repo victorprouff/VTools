@@ -1,0 +1,13 @@
+<nav class="navbar">
+    <div class="navbar-brand">VTools</div>
+    <div class="navbar-links">
+        <NavLink href="/books" Match="NavLinkMatch.Prefix">Livres</NavLink>
+        <NavLink href="/lent-items" Match="NavLinkMatch.Prefix">Objets pretes</NavLink>
+    </div>
+    <div class="navbar-logout">
+        <form method="post" action="/account/logout">
+            <AntiforgeryToken />
+            <button type="submit">Deconnexion</button>
+        </form>
+    </div>
+</nav>

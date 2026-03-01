@@ -1,0 +1,105 @@
+@page "/books"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+@inject BookService BookService
+@inject NavigationManager Navigation
+
+<PageTitle>Livres</PageTitle>
+
+<div class="page-header">
+    <h1>Ma bibliotheque</h1>
+    <a href="/books/add" class="btn btn-primary">+ Ajouter</a>
+</div>
+
+<div class="tabs">
+    <button class="tab @(ActiveTab == "toread" ? "active" : "")" @onclick='() => ActiveTab = "toread"'>
+        A lire (@ToRead.Count)
+    </button>
+    <button class="tab @(ActiveTab == "read" ? "active" : "")" @onclick='() => ActiveTab = "read"'>
+        Lus (@Read.Count)
+    </button>
+</div>
+
+@if (ActiveTab == "toread")
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in ToRead)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Description</td>
+                    <td>
+                        <a href="/books/@book.Id/edit" class="btn btn-sm">Modifier</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteBook(book.Id)">Supprimer</button>
+                    </td>
+                </tr>
+            }
+            @if (!ToRead.Any())
+            {
+                <tr><td colspan="3">Aucun livre a lire.</td></tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Date de lecture</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Read)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Description</td>
+                    <td>@book.EndReadingDate?.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a href="/books/@book.Id/edit" class="btn btn-sm">Modifier</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteBook(book.Id)">Supprimer</button>
+                    </td>
+                </tr>
+            }
+            @if (!Read.Any())
+            {
+                <tr><td colspan="4">Aucun livre lu.</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Book> AllBooks = [];
+    private List<Book> ToRead => AllBooks.Where(b => !b.IsRead).ToList();
+    private List<Book> Read => AllBooks.Where(b => b.IsRead).OrderByDescending(b => b.EndReadingDate).ToList();
+    private string ActiveTab = "toread";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBooks();
+    }
+
+    private async Task LoadBooks()
+    {
+        AllBooks = await BookService.GetAllAsync();
+    }
+
+    private async Task DeleteBook(int id)
+    {
+        await BookService.DeleteAsync(id);
+        await LoadBooks();
+    }
+}
