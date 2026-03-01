@@ -4,9 +4,12 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./data:/data
+      - vtools-data:/data
     env_file:
       - .env
     environment:
       - ConnectionStrings__DefaultConnection=Data Source=/data/vtools.db
     restart: unless-stopped
+
+volumes:
+  vtools-data:
