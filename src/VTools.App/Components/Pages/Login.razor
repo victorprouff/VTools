@@ -7,7 +7,11 @@
     <h1>VTools</h1>
     <h2>Connexion</h2>
 
-    @if (ShowError)
+    @if (IsLockedOut)
+    {
+        <p class="error">Trop de tentatives échouées. Réessayez dans @RemainingMinutes min @RemainingExtraSeconds s.</p>
+    }
+    else if (ShowError)
     {
         <p class="error">Identifiants incorrects.</p>
     }
@@ -35,5 +39,11 @@
     [SupplyParameterFromQuery(Name = "error")]
     public string? Error { get; set; }
 
+    [SupplyParameterFromQuery(Name = "seconds")]
+    public int Seconds { get; set; }
+
     private bool ShowError => Error == "1";
+    private bool IsLockedOut => Error == "locked";
+    private int RemainingMinutes => Seconds / 60;
+    private int RemainingExtraSeconds => Seconds % 60;
 }

@@ -15,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Business services
 builder.Services.AddScoped<BookService>();
 builder.Services.AddScoped<LentItemService>();
+builder.Services.AddSingleton<LoginAttemptTracker>();
 
 // Cookie authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -53,6 +54,15 @@ app.UseAntiforgery();
 // Login endpoint
 app.MapPost("/account/login", async (HttpContext ctx, string? returnUrl) =>
 {
+    var tracker = ctx.RequestServices.GetRequiredService<LoginAttemptTracker>();
+    var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+    if (tracker.IsLockedOut(ip))
+    {
+        var remaining = tracker.GetRemainingSeconds(ip);
+        return Results.Redirect($"/login?error=locked&seconds={remaining}");
+    }
+
     var form = await ctx.Request.ReadFormAsync();
     var username = form["username"].ToString();
     var password = form["password"].ToString();
@@ -66,6 +76,7 @@ app.MapPost("/account/login", async (HttpContext ctx, string? returnUrl) =>
 
     if (username == configuredUsername && password == configuredPassword)
     {
+        tracker.RecordSuccess(ip);
         var claims = new List<Claim> { new(ClaimTypes.Name, username) };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
@@ -73,6 +84,7 @@ app.MapPost("/account/login", async (HttpContext ctx, string? returnUrl) =>
         return Results.Redirect(returnUrl ?? "/books");
     }
 
+    tracker.RecordFailure(ip);
     return Results.Redirect("/login?error=1");
 });
 
