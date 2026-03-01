@@ -4,6 +4,10 @@
         <NavLink href="/books" Match="NavLinkMatch.Prefix">Livres</NavLink>
         <NavLink href="/lent-items" Match="NavLinkMatch.Prefix">Objets pretes</NavLink>
     </div>
+    <button class="btn-theme" onclick="toggleTheme()" title="Changer le theme" aria-label="Changer le theme">
+        <span class="icon-sun">&#9728;</span>
+        <span class="icon-moon">&#9790;</span>
+    </button>
     <div class="navbar-logout">
         <form method="post" action="/account/logout">
             <AntiforgeryToken />

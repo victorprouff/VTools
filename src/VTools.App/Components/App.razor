@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,12 +7,15 @@
     <base href="/" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["VTools.App.styles.css"]" />
+    <!-- Applique le thème avant le rendu pour éviter le flash -->
+    <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
     <ImportMap />
     <HeadOutlet />
 </head>
 
 <body>
     <Routes />
+    <script src="theme.js"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 
