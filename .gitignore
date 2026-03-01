@@ -7,15 +7,15 @@ obj/
 .vscode/
 *.swp
 
-## Data
-data/
+## Data (SQLite volume mount — anchored to repo root only)
+/data/
 
 ## Secrets
 .env
 
-## Docker
-.dockerignore
 
 ## OS
 .DS_Store
 Thumbs.db
+
+.idea/
