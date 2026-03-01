@@ -14,10 +14,10 @@ public class LoginAttemptTracker
     public bool IsLockedOut(string ip) =>
         _attempts.TryGetValue(ip, out var info) && info.LockedUntil > DateTimeOffset.UtcNow;
 
-    public int GetRemainingSeconds(string ip)
+    public long GetLockoutExpiryUnix(string ip)
     {
-        if (_attempts.TryGetValue(ip, out var info) && info.LockedUntil > DateTimeOffset.UtcNow)
-            return (int)Math.Ceiling((info.LockedUntil - DateTimeOffset.UtcNow).TotalSeconds);
+        if (_attempts.TryGetValue(ip, out var info))
+            return info.LockedUntil.ToUnixTimeSeconds();
         return 0;
     }
 

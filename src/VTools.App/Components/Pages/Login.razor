@@ -39,11 +39,14 @@
     [SupplyParameterFromQuery(Name = "error")]
     public string? Error { get; set; }
 
-    [SupplyParameterFromQuery(Name = "seconds")]
-    public int Seconds { get; set; }
+    [SupplyParameterFromQuery(Name = "until")]
+    public long Until { get; set; }
 
     private bool ShowError => Error == "1";
     private bool IsLockedOut => Error == "locked";
-    private int RemainingMinutes => Seconds / 60;
-    private int RemainingExtraSeconds => Seconds % 60;
+
+    private int RemainingSeconds => (int)Math.Max(0,
+        DateTimeOffset.FromUnixTimeSeconds(Until).ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+    private int RemainingMinutes => RemainingSeconds / 60;
+    private int RemainingExtraSeconds => RemainingSeconds % 60;
 }

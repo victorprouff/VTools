@@ -59,8 +59,8 @@ app.MapPost("/account/login", async (HttpContext ctx, string? returnUrl) =>
 
     if (tracker.IsLockedOut(ip))
     {
-        var remaining = tracker.GetRemainingSeconds(ip);
-        return Results.Redirect($"/login?error=locked&seconds={remaining}");
+        var until = tracker.GetLockoutExpiryUnix(ip);
+        return Results.Redirect($"/login?error=locked&until={until}");
     }
 
     var form = await ctx.Request.ReadFormAsync();
